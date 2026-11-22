@@ -1,0 +1,16 @@
+conjuntos:
+  - nome: clientes
+    dono: time de cadastro          # um time da loja, nunca uma pessoa
+    classe: pessoal sensível        # cpf e o campo mais sensivel
+    retencao: 5 anos após o fim da relação (obrigação fiscal) e o cadastro enquanto durar a relação
+    acesso: analistas pedem, o time de privacidade aprova, toda leitura e auditada
+  - nome: pedidos
+    dono: time de pedidos
+    classe: pessoal
+    retencao: 5 anos (obrigação fiscal)
+    acesso: analistas de receita pedem, o dono do dado aprova, leitura auditada
+  - nome: navegacao
+    dono: time de plataforma
+    classe: pessoal
+    retencao: 90 dias (volume alto, uso curto de analytics)
+    acesso: time de produto pede, a plataforma aprova, leitura agregada auditada

@@ -1,0 +1,11 @@
+MISSAO 6 - Seguranca: cada classe com a sua tranca
+================================================
+Camada silver montada: 6 clientes, 11 pedidos, 8 eventos (sem nome, email,
+   CPF, observacao nem ip).
+Busca por @, CPF, telefone e IP na silver: nenhuma ocorrencia
+Mesma chave -> mesmos pseudonimos: b7174da969df == b7174da969df
+Outra chave -> todos mudam: 8f0c48647588 (diferente)
+Valor da chave no repositorio: nenhuma ocorrencia
+EXTRA: conjunto sintetico gerado em dados/sintetico/
+
+Arquivos: seguranca/seguranca.py | seguranca/matriz.md | chave fora do repo

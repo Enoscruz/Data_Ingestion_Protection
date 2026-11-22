@@ -1,0 +1,10 @@
+MISSAO 2 - CDC: o banco conta o que mudou
+================================================
+1) O log registra 5 eventos, na ordem em que foram aplicados:
+   1 pedidos ALTERACAO 105 | 2 clientes ALTERACAO 3 | 3 clientes INSERCAO 7 | 4 pedidos INSERCAO 109 | 5 clientes EXCLUSAO 5
+2) Camada bronze depois de sincronizar: 6 clientes (sem a cliente 5), 9 pedidos,
+   e-mail novo no cliente 3 (carla.n@example.com)
+3) O pedido 106 continua la: sim. Receita paga: R$ 750,90
+4) Reaplicar o log desde o primeiro evento: mesmos numeros (6 clientes, 9 pedidos, R$ 750,90)
+
+Arquivos: ingestao/cdc.py | log em dados/log/mudancas.csv | offset em dados/estado/offsets.json

@@ -1,0 +1,6 @@
+seq,tabela,operacao,chave,dados
+1,pedidos,ALTERACAO,105,"{""status"": ""pago"", ""atualizado_em"": ""2026-10-02T08:10:00""}"
+2,clientes,ALTERACAO,3,"{""email"": ""carla.n@example.com"", ""atualizado_em"": ""2026-10-02T08:20:00""}"
+3,clientes,INSERCAO,7,"{""nome"": ""Gabi Rocha"", ""email"": ""gabi.rocha@example.com"", ""cpf"": ""777.777.777-77"", ""nascimento"": ""1996-02-25"", ""cidade"": ""Sorocaba"", ""atualizado_em"": ""2026-10-02T08:30:00""}"
+4,pedidos,INSERCAO,109,"{""cliente_id"": ""7"", ""valor_centavos"": ""5600"", ""status"": ""pago"", ""criado_em"": ""2026-10-02T08:40:00"", ""atualizado_em"": ""2026-10-02T08:40:00"", ""observacao"": """"}"
+5,clientes,EXCLUSAO,5,{}

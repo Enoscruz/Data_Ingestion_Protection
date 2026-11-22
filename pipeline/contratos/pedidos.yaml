@@ -1,0 +1,34 @@
+conjunto: pedidos
+versao: 1
+dono: time de pedidos
+classe: pessoal            # a classe do conjunto e a do campo mais sensivel
+frescor: até 24 horas depois da mudança na origem
+campos:
+  - nome: id
+    tipo: inteiro
+    obrigatorio: true
+    unico: true
+    classe: interno
+  - nome: cliente_id
+    tipo: inteiro
+    obrigatorio: true
+    classe: interno
+  - nome: valor_centavos
+    tipo: inteiro
+    obrigatorio: true
+    minimo: 0
+    classe: interno
+  - nome: status
+    tipo: texto
+    obrigatorio: true
+    dominio: [pendente, pago, cancelado]
+    classe: interno
+  - nome: criado_em
+    tipo: data_hora
+    obrigatorio: true
+    maximo: momento da carga
+    classe: interno
+  - nome: observacao
+    tipo: texto
+    obrigatorio: false
+    classe: interno        # texto livre: esconde dado pessoal sem ninguem declarar (ver Missao 5)

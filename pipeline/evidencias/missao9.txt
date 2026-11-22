@@ -1,0 +1,13 @@
+MISSAO 9 - Resiliencia: copia, reconstrucao e ensaio
+================================================
+Copia do dia 1 criada (contem a cliente 5) + offset do log + copia da chave.
+'reconstruir' recria a silver e a gold a partir da bronze: 11 pedidos, R$ 844,90.
+Ensaio de desastre (RTO medido): 0.03 s
+Depois do ensaio: 6 clientes, 11 pedidos, 6 eventos, R$ 844,90.
+A cliente 5 nao reaparece em nenhuma camada: confirmado
+Visao de consumo:
+   - Campinas  | 1 | - | suprimida
+   - Santos    | 3 | R$ 545,00 | liberada
+   - Sorocaba  | 2 | R$ 95,90 | liberada
+
+Arquivos: resiliencia/resiliencia.py | resiliencia/plano.md | copia em dados/backup/

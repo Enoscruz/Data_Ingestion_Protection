@@ -1,0 +1,10 @@
+MISSAO 8 - O direito de ser esquecido (cliente 5)
+================================================
+Busca por "Elisa", 555.555.555-55, (13) 90000-0005 e 203.0.113.55
+nas camadas: nenhuma ocorrencia
+Depois do esquecimento: 6 eventos de navegacao, 11 pedidos, receita paga R$ 844,90.
+A visao de consumo nao muda.
+Lista de eliminacao: 1 registro, sem nome, CPF, e-mail ou telefone.
+Rodar 'esquecer 5' de novo: idempotente (nao mudou)
+
+Arquivos: privacidade/esquecer.py | privacidade/moradas.md | dados/eliminacao/lista.csv

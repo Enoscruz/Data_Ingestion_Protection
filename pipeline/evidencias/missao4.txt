@@ -1,0 +1,13 @@
+MISSAO 4 - Contrato, validador e quarentena
+================================================
+Do lote do dia 3: 2 linhas aceitas (pedidos 110 e 115) e 5 para a quarentena.
+Motivos (um por linha):
+   - valor negativo
+   - cliente ausente
+   - status fora do domínio
+   - chave repetida
+   - data no futuro
+Camada silver: 11 pedidos. Receita paga: R$ 844,90
+Sem a validacao, o mesmo calculo daria R$ 932,90.
+
+Arquivos: contratos/*.yaml | qualidade/validador.py | quarentena em dados/quarentena/pedidos.csv

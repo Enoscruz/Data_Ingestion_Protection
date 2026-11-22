@@ -1,0 +1,27 @@
+conjunto: navegacao
+versao: 1
+dono: time de plataforma
+classe: pessoal            # ip e dado pessoal (LGPD)
+frescor: até 5 segundos depois do evento
+campos:
+  - nome: evento_id
+    tipo: inteiro
+    obrigatorio: true
+    unico: true
+    classe: interno
+  - nome: cliente_id
+    tipo: inteiro
+    obrigatorio: false
+    classe: interno
+  - nome: ip
+    tipo: texto
+    obrigatorio: true
+    classe: interno        # escondido: o varredor da Missao 5 e que encontra o IP
+  - nome: pagina
+    tipo: texto
+    obrigatorio: true
+    classe: interno
+  - nome: quando
+    tipo: data_hora
+    obrigatorio: true
+    classe: interno

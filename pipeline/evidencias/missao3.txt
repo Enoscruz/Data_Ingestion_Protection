@@ -1,0 +1,11 @@
+MISSAO 3 - Streaming: um log, varios leitores
+================================================
+Produtor: publicou 8 eventos no topico navegacao.
+Leitor rapido 'visitas': /carrinho com 2 visitas e 6 paginas com 1 visita.
+Queda e retomada: parou apos o 4o evento (offset salvo em 4), religou e
+  chegou aos mesmos totais, sem contar evento duas vezes.
+Leitor lento 'bronze': gravou 8 eventos, sem duplicata.
+Leitor novo 'por_cliente' (ligado depois de tudo, do offset 0): (sem cadastro)=1, 1=2, 2=1, 3=1, 5=2, 6=1
+Ao fim, o topico continua com 8 eventos (guarda por tempo, nao ate ser lido).
+
+Arquivos: ingestao/fluxo.py | topico em dados/log/navegacao.csv

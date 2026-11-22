@@ -1,0 +1,11 @@
+MISSAO 7 - Privacidade e LGPD: pseudonimo nao e anonimo
+================================================
+K da tabela de clientes (cidade + faixa etaria): 4 combinacoes com 1 pessoa so.
+Visao de consumo (K = 2):
+   - Campinas  | 1 cliente(s) | -         | suprimida
+   - Santos    | 3 cliente(s) | R$ 545,00 | liberada
+   - Sorocaba  | 2 cliente(s) | R$ 95,90  | liberada
+Total geral: R$ 844,90 (inclui a cidade suprimida e os R$ 159,00 do pedido 106).
+Com K = 3, tambem fica suprimida: Campinas, Sorocaba
+
+Arquivos: privacidade/privacidade.py | gold em dados/gold/receita_por_cidade.csv

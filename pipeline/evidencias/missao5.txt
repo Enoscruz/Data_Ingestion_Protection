@@ -1,0 +1,11 @@
+MISSAO 5 - Governanca: dono, classe, retencao e catalogo
+================================================
+Regra como codigo: removida a retencao de 'navegacao', o pipeline para com:
+   PIPELINE BARRADO: o conjunto 'navegacao' e de classe 'pessoal' e nao tem retencao definida. Defina o prazo no acordo de governanca.
+Catalogo gerado por script: governanca/catalogo.md (nada digitado duas vezes).
+Varredor - dado pessoal onde ninguem declarou:
+   - pedidos 104: email em observacao
+   - pedidos 106: telefone em observacao
+   - navegacao: coluna 'ip' nos 8 eventos
+
+Arquivos: governanca/acordo.yaml | governanca/governanca.py | governanca/catalogo.md

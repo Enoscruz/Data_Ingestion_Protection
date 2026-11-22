@@ -1,0 +1,11 @@
+MISSAO 1 - Carga incremental e idempotencia
+================================================
+1) Primeira execucao (dia 1): clientes=6, pedidos=8, navegacao=8
+2) Segunda execucao sem mudanca na origem: lidas clientes=0, pedidos=0
+   -> totais continuam 6, 8, 8
+3) Depois das mudancas do dia 2: a execucao le 4 linhas (pedidos ['105', '109']; clientes ['3', '7'])
+4) Camada bronze: 7 clientes, 9 pedidos, receita paga R$ 750,90
+5) A cliente 5 foi excluida na origem e continua na bronze: sim
+   (e o ponto de partida da Missao 2)
+
+Arquivos: ingestao/carga.py | estado em dados/estado/marca_agua.json

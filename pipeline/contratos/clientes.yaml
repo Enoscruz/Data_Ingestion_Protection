@@ -1,0 +1,35 @@
+conjunto: clientes
+versao: 1
+dono: time de cadastro
+classe: pessoal sensível    # cpf e o campo mais sensivel
+frescor: até 24 horas depois da mudança na origem
+campos:
+  - nome: id
+    tipo: inteiro
+    obrigatorio: true
+    unico: true
+    classe: interno
+  - nome: nome
+    tipo: texto
+    obrigatorio: true
+    classe: pessoal
+  - nome: email
+    tipo: texto
+    obrigatorio: true
+    classe: pessoal
+  - nome: cpf
+    tipo: texto
+    obrigatorio: true
+    classe: pessoal sensível
+  - nome: nascimento
+    tipo: data
+    obrigatorio: true
+    classe: pessoal
+  - nome: cidade
+    tipo: texto
+    obrigatorio: true
+    classe: interno
+  - nome: atualizado_em
+    tipo: data_hora
+    obrigatorio: true
+    classe: interno

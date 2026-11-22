@@ -1,0 +1,2 @@
+chave,data,moradas_tratadas
+5,2026-10-04T00:00:00,origem.clientes;origem.pedidos.observacao;origem.navegacao;log.mudancas;log.navegacao;estado.leitores;bronze.clientes;bronze.pedidos;bronze.navegacao;silver.clientes;silver.pedidos;silver.navegacao;copia.seguranca

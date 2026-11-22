@@ -1,0 +1,2009 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Laboratório DI Do Dado à Proteção</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  /* Layout: trilha de missões no topo; palco com o diagrama que cresce (esquerda) e o conceito (direita);
+     abaixo, duas colunas de trabalho: simulação e construção. Identidade FIAP das anatomias de SOA. */
+  :root{
+    --rosa:#F0265D; --rosa-esc:#B80F45; --rosa-claro:#FDF2F6; --sobre-rosa:#FFFFFF;
+    --ground:#F5F4F7; --surface:#FFFFFF; --surface-2:#EFEDF2;
+    --ink:#1D1A22; --ink-2:#4A4453; --muted:#726B7C; --linha:#DFDBE5;
+    --sync:#0B6BCB; --sync-soft:#E8F1FC;
+    --async:#0A7D3F; --async-soft:#E7F5EC;
+    --warn:#B45309; --warn-soft:#FBF1DF;
+    --erro:#C1121F; --erro-soft:#FDECEC;
+    --shadow:0 1px 2px rgba(29,26,34,.05), 0 10px 30px -22px rgba(29,26,34,.5);
+    --f-display:"Barlow Condensed","Arial Narrow",Arial,sans-serif;
+    --f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",Arial,sans-serif;
+    --f-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      color-scheme:dark;
+      --rosa:#FF5C8A; --rosa-esc:#FF8AAC; --rosa-claro:#331020; --sobre-rosa:#22060F;
+      --ground:#121016; --surface:#1B171F; --surface-2:#242029;
+      --ink:#F4F1F7; --ink-2:#D3CCDA; --muted:#A198AB; --linha:#332D3B;
+      --sync:#69B0F5; --sync-soft:#122438;
+      --async:#5FD08D; --async-soft:#0F2A1B;
+      --warn:#E8B860; --warn-soft:#2E2411;
+      --erro:#FF7A7A; --erro-soft:#331416;
+      --shadow:0 1px 2px rgba(0,0,0,.5), 0 10px 30px -22px #000;
+    }
+  }
+  :root[data-theme="dark"]{
+    color-scheme:dark;
+    --rosa:#FF5C8A; --rosa-esc:#FF8AAC; --rosa-claro:#331020; --sobre-rosa:#22060F;
+    --ground:#121016; --surface:#1B171F; --surface-2:#242029;
+    --ink:#F4F1F7; --ink-2:#D3CCDA; --muted:#A198AB; --linha:#332D3B;
+    --sync:#69B0F5; --sync-soft:#122438;
+    --async:#5FD08D; --async-soft:#0F2A1B;
+    --warn:#E8B860; --warn-soft:#2E2411;
+      --erro:#FF7A7A; --erro-soft:#331416;
+    --shadow:0 1px 2px rgba(0,0,0,.5), 0 10px 30px -22px #000;
+  }
+
+  *{box-sizing:border-box}
+  body{
+    background:var(--ground);color:var(--ink);
+    font-family:var(--f-body);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3{font-family:var(--f-display);text-wrap:balance}
+  code{font-family:var(--f-mono);font-size:.86em;background:var(--surface-2);
+    padding:1px 5px;border-radius:3px;color:var(--ink)}
+
+  header.top{
+    background:var(--surface);border-bottom:3px solid var(--rosa);
+    padding:16px 26px;display:flex;align-items:baseline;gap:6px 14px;flex-wrap:wrap;
+  }
+  header.top h1{margin:0;font-size:24px;color:var(--rosa);text-transform:uppercase;letter-spacing:.01em}
+  header.top p{margin:0;font-size:13px;color:var(--muted)}
+
+  .shell{max-width:1400px;margin:0 auto;padding-block:16px 40px;padding-inline:22px}
+  @media(max-width:520px){.shell{padding-inline:16px} header.top{padding-inline:16px}}
+
+  button{font:600 14px var(--f-body);padding:8px 16px;border:0;border-radius:5px;cursor:pointer}
+  button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,summary:focus-visible{
+    outline:2px solid var(--rosa);outline-offset:2px}
+  .primario{background:var(--rosa);color:var(--sobre-rosa)}
+  .primario:hover{background:var(--rosa-esc)}
+  .secundario{background:transparent;color:var(--ink-2);border:1.5px solid var(--linha)}
+  .secundario:hover{border-color:var(--rosa);color:var(--rosa-esc)}
+  button[disabled]{opacity:.4;cursor:not-allowed}
+
+  /* ---------- trilha de missões ---------- */
+  .trilha{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+  .trilha button{
+    background:var(--surface);border:1px solid var(--linha);color:var(--ink-2);
+    padding:6px 12px;display:flex;gap:8px;align-items:baseline;font-weight:500;
+  }
+  .trilha .n{font-family:var(--f-display);font-weight:700;font-size:17px;color:var(--rosa)}
+  .trilha .ok{font-family:var(--f-mono);font-size:10.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+  .trilha button:hover{border-color:var(--rosa)}
+  .trilha button.now{background:var(--rosa);border-color:var(--rosa);color:var(--sobre-rosa);font-weight:600}
+  .trilha button.now .n,.trilha button.now .ok{color:var(--sobre-rosa)}
+
+  /* ---------- palco ---------- */
+  .stage{display:grid;grid-template-columns:minmax(0,1fr) 388px;gap:20px;align-items:start}
+  .stage > *{min-width:0}
+  @media(max-width:1080px){.stage{grid-template-columns:minmax(0,1fr);gap:14px}}
+
+  .canvas{background:var(--surface);border:1px solid var(--linha);border-radius:8px;
+    padding:10px;box-shadow:var(--shadow);overflow:hidden}
+  svg#diagrama{width:100%;height:auto;display:block}
+  @media(max-width:760px){.canvas{overflow-x:auto} svg#diagrama{min-width:700px}}
+
+  .node rect{fill:var(--surface-2);stroke:var(--linha);stroke-width:1.5}
+  .node .lbl{font-family:var(--f-display);font-weight:600;font-size:17px;fill:var(--ink)}
+  .node .sub{font-family:var(--f-mono);font-size:9.5px;fill:var(--muted);letter-spacing:.03em}
+  .node{opacity:0;pointer-events:none;transform:translateY(10px) scale(.98);
+    transform-box:fill-box;transform-origin:center;transition:opacity .45s ease,transform .45s ease}
+  .node.on{opacity:1;transform:none;pointer-events:auto;cursor:pointer}
+  .node.new rect{stroke:var(--rosa);stroke-width:2.5}
+  .node.new .lbl{fill:var(--rosa-esc)}
+  .node.client rect{fill:var(--rosa-claro);stroke:var(--rosa)}
+  .node.broker rect{fill:var(--async-soft);stroke:var(--async);stroke-width:2}
+  .node.ext rect{stroke-dasharray:5 4}
+  .node.doc rect{fill:var(--surface);stroke:var(--rosa);stroke-dasharray:4 3}
+  .node.doc .lbl{font-family:var(--f-mono);font-weight:500;font-size:12px}
+  .node.dado rect{fill:var(--surface);stroke:var(--muted)}
+  .node.dado .lbl{font-family:var(--f-body);font-weight:500;font-size:12.5px;fill:var(--ink-2)}
+
+  .edge{opacity:0;transition:opacity .5s ease}
+  .edge.on{opacity:1}
+  .edge path{fill:none;stroke-width:2}
+  .edge text{font-family:var(--f-mono);font-size:10px;fill:var(--muted);letter-spacing:.04em}
+  .edge.sync path{stroke:var(--sync)}
+  .edge.async path{stroke:var(--async);stroke-dasharray:7 5}
+  .edge.contrato path{stroke:var(--rosa);stroke-dasharray:2 4;stroke-width:1.8}
+  .edge.dado path{stroke:var(--muted);stroke-width:1.5}
+  #mk-sync path{fill:var(--sync)}
+  #mk-async path{fill:var(--async)}
+
+  .legend{display:flex;gap:6px 18px;flex-wrap:wrap;padding:9px 12px;margin-top:12px;
+    background:var(--surface);border:1px solid var(--linha);border-radius:6px;font-size:12.5px;color:var(--muted)}
+  .legend i{display:inline-block;width:22px;height:0;border-top:2.5px solid;margin-right:6px;vertical-align:middle}
+  .legend .l-sync i{border-color:var(--sync)}
+  .legend .l-async i{border-color:var(--async);border-top-style:dashed}
+  .legend .l-contrato i{border-color:var(--rosa);border-top-style:dotted}
+  .legend b{color:var(--ink)}
+
+  .principios{margin-top:12px;padding:10px 12px;background:var(--surface);border:1px solid var(--linha);border-radius:6px}
+  .principios .cab{display:flex;justify-content:space-between;gap:10px;align-items:baseline;margin-bottom:8px;
+    font-family:var(--f-mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+  .principios .cab b{color:var(--rosa-esc);font-variant-numeric:tabular-nums}
+  .principios ul{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:6px}
+  .principios li{font-size:12.5px;padding:3px 9px;border-radius:3px;border:1px solid var(--linha);color:var(--muted);
+    transition:background .3s ease,color .3s ease,border-color .3s ease}
+  .principios li.feito{background:var(--surface-2);color:var(--ink);border-color:var(--surface-2)}
+  .principios li.agora{background:var(--rosa);border-color:var(--rosa);color:var(--sobre-rosa);font-weight:600}
+
+  /* ---------- painel de conceito ---------- */
+  .panel{background:var(--surface);border:1px solid var(--linha);border-radius:8px;box-shadow:var(--shadow);overflow:hidden}
+  .panel-head{background:var(--rosa-claro);border-bottom:1px solid var(--linha);padding:11px 16px;
+    display:flex;align-items:center;gap:10px}
+  .num{font-family:var(--f-display);background:var(--rosa);color:var(--sobre-rosa);border-radius:3px;
+    padding:1px 9px;font-size:14px;font-weight:600;white-space:nowrap}
+  .panel-head h2{margin:0;font-size:20px;color:var(--rosa-esc);line-height:1.15}
+  .panel-body{padding:14px 16px 16px}
+  .pills{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+  .pill{font-family:var(--f-display);font-size:12.5px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;
+    padding:2px 9px;border-radius:3px;background:var(--surface-2);color:var(--ink-2)}
+  .pill.tempo{background:transparent;border:1px solid var(--linha);color:var(--muted)}
+  .lead{margin:0 0 12px;font-size:15px;color:var(--ink)}
+  .beats{margin:0}
+  .beats dt{font-family:var(--f-mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--rosa-esc);margin-top:10px}
+  .beats dd{margin:2px 0 0;font-size:13.5px;color:var(--ink-2)}
+  .real{margin-top:13px;background:var(--surface-2);border-left:3px solid var(--rosa);border-radius:0 4px 4px 0;
+    padding:8px 11px;font-size:13.5px;color:var(--ink)}
+  .real b{font-family:var(--f-mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);
+    display:block;margin-bottom:3px;font-weight:500}
+  .controls{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:12px 16px;
+    border-top:1px solid var(--linha);background:var(--surface-2)}
+
+  /* ---------- área de trabalho ---------- */
+  .work{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:20px;margin-top:20px;align-items:start}
+  .work > *{min-width:0}
+  @media(max-width:1080px){.work{grid-template-columns:minmax(0,1fr);gap:14px}}
+  .card{background:var(--surface);border:1px solid var(--linha);border-radius:8px;box-shadow:var(--shadow);overflow:hidden}
+  .card-head{padding:11px 16px;border-bottom:1px solid var(--linha);display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
+  .card-head h3{margin:0;font-size:19px;line-height:1.15;color:var(--ink)}
+  .tag{font-family:var(--f-mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--rosa-esc)}
+  .card-body{padding:14px 16px 16px;display:flex;flex-direction:column;gap:14px}
+  .exp-in{display:flex;flex-direction:column;gap:14px;min-width:0}
+  .card-body p{margin:0;font-size:14px;color:var(--ink-2)}
+  .sub-t{font-family:var(--f-mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:0 0 6px}
+
+  .tasks{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+  .tasks label{display:grid;grid-template-columns:20px minmax(0,1fr);gap:8px;align-items:start;font-size:14px;color:var(--ink);cursor:pointer}
+  .tasks input{width:16px;height:16px;margin:3px 0 0;accent-color:var(--rosa)}
+  .tasks input:checked + span{color:var(--muted)}
+  .tasks .trilhas{display:block;margin-top:5px;font-size:13.5px;color:var(--ink-2)}
+  .tasks .trilhas b{color:var(--ink)}
+
+  .codewrap{display:flex;flex-direction:column-reverse;gap:4px;min-width:0}
+  pre.code{background:var(--surface-2);border:1px solid var(--linha);border-radius:5px;padding:10px 12px;
+    overflow-x:auto;font:12.5px/1.55 var(--f-mono);color:var(--ink);margin:0;tab-size:2}
+  pre.code .mud{background:var(--warn-soft);color:var(--warn)}
+  .copy{align-self:flex-end;font-size:11px;font-weight:500;padding:3px 8px;
+    background:var(--surface);color:var(--muted);border:1px solid var(--linha)}
+  .copy:hover{color:var(--rosa-esc);border-color:var(--rosa)}
+
+  details.mais{border:1px solid var(--linha);border-radius:5px;padding:8px 12px}
+  details.mais summary{cursor:pointer;font-weight:600;font-size:14px;color:var(--rosa-esc)}
+  details.mais[open] summary{margin-bottom:9px}
+  details.mais .nota{font-size:13px;color:var(--ink-2);margin:0 0 8px}
+
+  .checks{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:9px;counter-reset:c}
+  .checks li{counter-increment:c;display:grid;grid-template-columns:22px minmax(0,1fr);gap:6px;font-size:13.5px}
+  .checks li::before{content:counter(c);font-family:var(--f-display);font-weight:700;color:var(--rosa);font-size:16px;line-height:1.3}
+  .checks .cmd{display:block;overflow-x:auto;white-space:nowrap;font-family:var(--f-mono);font-size:12px;
+    background:var(--surface-2);border-radius:3px;padding:4px 7px;color:var(--ink)}
+  .checks .esp{display:block;margin-top:3px;color:var(--ink-2)}
+  .checks .esp b{font-family:var(--f-mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--async);font-weight:500}
+
+  .entrega{background:var(--rosa-claro);border:1px solid var(--rosa);border-radius:5px;padding:10px 12px;font-size:14px;color:var(--ink)}
+  .entrega b.t{display:block;font-family:var(--f-display);font-size:15px;letter-spacing:.05em;text-transform:uppercase;color:var(--rosa-esc);margin-bottom:2px}
+
+  table.grade{width:100%;border-collapse:collapse;font-size:13.5px}
+  table.grade th{font-family:var(--f-mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);
+    text-align:left;font-weight:500;padding:4px 8px 6px 0;border-bottom:1px solid var(--linha)}
+  table.grade td{padding:6px 8px 6px 0;border-bottom:1px solid var(--linha);color:var(--ink-2);vertical-align:top}
+  table.grade td:last-child,table.grade th:last-child{text-align:right;padding-right:0;white-space:nowrap;
+    font-variant-numeric:tabular-nums;color:var(--ink);font-weight:600}
+  table.grade tr:last-child td{border-bottom:0}
+
+  /* ---------- simulações ---------- */
+  .chips{display:flex;flex-wrap:wrap;gap:8px}
+  .chip{border:1.5px solid var(--linha);background:var(--surface);color:var(--ink-2);padding:7px 11px;
+    font-size:13.5px;font-weight:500;text-align:left}
+  .chip:hover{border-color:var(--rosa)}
+  .chip[aria-pressed="true"]{border-color:var(--rosa);background:var(--rosa-claro);color:var(--ink)}
+  .chip.mod{border-style:dashed}
+  .seg{display:inline-flex;border:1.5px solid var(--linha);border-radius:6px;overflow:hidden;flex-wrap:wrap;align-self:flex-start}
+  .seg button{border-radius:0;background:transparent;color:var(--ink-2);font-weight:500;font-size:13.5px;padding:7px 12px}
+  .seg button[aria-pressed="true"]{background:var(--rosa);color:var(--sobre-rosa);font-weight:600}
+  .btn-row{display:flex;flex-wrap:wrap;gap:8px}
+  .btn-row button{font-size:13.5px;padding:7px 12px}
+
+  .st{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;padding:2px 7px;border-radius:3px;white-space:nowrap}
+  .st.ok{background:var(--async-soft);color:var(--async)}
+  .st.bad{background:var(--erro-soft);color:var(--erro)}
+  .st.warn{background:var(--warn-soft);color:var(--warn)}
+  .st.off{background:var(--surface-2);color:var(--muted)}
+
+  .veredito{border-left:3px solid var(--rosa);background:var(--surface-2);border-radius:0 4px 4px 0;
+    padding:9px 12px;font-size:14px;color:var(--ink);min-height:42px}
+
+  .linhas{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+  .linhas li{display:flex;gap:6px 12px;align-items:baseline;justify-content:space-between;flex-wrap:wrap;
+    padding:8px 0;border-bottom:1px solid var(--linha);font-size:14px}
+  .linhas li:last-child{border-bottom:0}
+  .linhas .quem b{color:var(--ink)}
+  .linhas .quem small{display:block;color:var(--muted);font-size:12.5px}
+  .linhas .res{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap;justify-content:flex-end}
+  .linhas .res small{color:var(--ink-2);font-size:12.5px}
+
+  .insts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+  @media(max-width:560px){.insts{grid-template-columns:minmax(0,1fr)}}
+  .inst{border:1.5px solid var(--linha);border-radius:5px;padding:9px 11px;min-height:104px}
+  .inst.caiu{border-style:dashed;opacity:.6}
+  .inst.alvo{border-color:var(--rosa)}
+  .inst h4{margin:0 0 4px;font-family:var(--f-display);font-size:16px;display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+  .inst .mem{font-family:var(--f-mono);font-size:12px;color:var(--ink-2);margin:0;padding:0;list-style:none}
+  .inst .vazio{font-size:12.5px;color:var(--muted)}
+
+  .acop{display:flex;flex-direction:column}
+  .acop-l{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px 16px;padding:10px 0;border-bottom:1px solid var(--linha);align-items:start}
+  .acop-l:last-child{border-bottom:0}
+  @media(max-width:560px){.acop-l{grid-template-columns:minmax(0,1fr)}}
+  .acop-l label{display:grid;grid-template-columns:20px minmax(0,1fr);gap:8px;font-size:14px;cursor:pointer;color:var(--ink)}
+  .acop-l input{width:16px;height:16px;margin:3px 0 0;accent-color:var(--rosa)}
+  .acop-l .mud{font-size:13.5px;color:var(--ink-2)}
+  .acop-l .mud .st{margin-right:6px}
+  .acop-l .rem{display:block;font-size:12.5px;color:var(--async);margin-top:3px}
+
+  .tiles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+  @media(max-width:560px){.tiles{grid-template-columns:minmax(0,1fr)}}
+  .tile{border:1px solid var(--linha);border-radius:5px;padding:9px 11px}
+  .tile .big{font-family:var(--f-display);font-size:30px;font-weight:700;color:var(--rosa);line-height:1.05;font-variant-numeric:tabular-nums}
+  .tile .big.bad{color:var(--erro)}
+  .tile .big.warn{color:var(--warn)}
+  .tile .cap{font-size:12px;color:var(--muted);line-height:1.35}
+
+  .cons{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+  @media(max-width:560px){.cons{grid-template-columns:minmax(0,1fr)}}
+  .con{border:1.5px solid var(--linha);border-radius:5px;padding:9px 11px;display:flex;flex-direction:column;gap:7px}
+  .con.fora{opacity:.55;border-style:dashed}
+  .con h4{margin:0;font-family:var(--f-display);font-size:16px;display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+  .con h4 small{font-family:var(--f-mono);font-size:10.5px;color:var(--muted);font-weight:400}
+  .con .btn-row button{font-size:12.5px;padding:4px 9px}
+
+  .regras{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+  @media(max-width:560px){.regras{grid-template-columns:minmax(0,1fr)}}
+  .regra h4{margin:0 0 3px;font-family:var(--f-display);font-size:17px;color:var(--rosa-esc)}
+  .regra p{font-size:13.5px}
+  .caixa{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:5px;font-size:13.5px;color:var(--ink-2)}
+  .caixa b{color:var(--ink)}
+
+  .form{display:flex;flex-direction:column;gap:10px}
+  .campo{display:flex;flex-direction:column;gap:3px}
+  .campo label{font-size:13px;font-weight:600;color:var(--ink)}
+  .campo input,.campo select,.form textarea{font:14px var(--f-body);color:var(--ink);background:var(--surface);
+    border:1.5px solid var(--linha);border-radius:4px;padding:7px 9px;width:100%}
+  .campo input::placeholder{color:var(--muted);opacity:.8}
+  .duo{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+  @media(max-width:560px){.duo{grid-template-columns:minmax(0,1fr)}}
+  .form textarea{font:12.5px/1.5 var(--f-mono);min-height:210px;resize:vertical}
+
+  .fim{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-top:20px}
+  .rodape{font-size:12px;color:var(--muted);text-align:center;margin:18px 0 0}
+
+  @media (prefers-reduced-motion: reduce){
+    .node,.edge,.principios li{transition:none}
+  }
+
+  /* ---------- acréscimos do laboratório de DI ---------- */
+  .edge.desvio path{stroke:var(--warn);stroke-dasharray:5 4}
+  #mk-desvio path{fill:var(--warn)}
+  .legend .l-desvio i{border-color:var(--warn);border-top-style:dashed}
+  .trilha{gap:4px}
+  .trilha button{padding:6px 8px;font-size:13.5px;gap:6px}
+  .trilha .n{font-size:16px}
+  .hd{display:flex;flex-direction:column;gap:2px;min-width:0}
+  .bloco{font-family:var(--f-mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+  .acop-l.um{grid-template-columns:minmax(0,1fr)}
+  .acop-l small{color:var(--muted)}
+  .tabwrap{overflow-x:auto}
+  table.mini{width:100%;border-collapse:collapse;font:12.5px var(--f-mono)}
+  table.mini th{text-align:left;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);
+    font-weight:500;padding:4px 8px;border-bottom:1px solid var(--linha)}
+  table.mini td{padding:5px 8px;border-bottom:1px solid var(--linha);color:var(--ink);white-space:nowrap}
+  table.mini tr.alvo td{background:var(--erro-soft);color:var(--erro)}
+  .etapas{display:flex;flex-direction:column}
+  .etapa{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px 16px;padding:10px 0;
+    border-bottom:1px solid var(--linha);align-items:start}
+  .etapa:last-child{border-bottom:0}
+  @media(max-width:560px){.etapa{grid-template-columns:minmax(0,1fr)}}
+  .etapa-c{display:flex;flex-direction:column;gap:6px;font-size:14px;color:var(--ink);min-width:0}
+  .etapa-c .seg button{padding:5px 10px;font-size:13px}
+  .etapa .mud{font-size:13.5px;color:var(--ink-2)}
+  .etapa .mud .st{margin-right:6px}
+  .etapa select{font:14px var(--f-body);color:var(--ink);background:var(--surface);border:1.5px solid var(--linha);
+    border-radius:4px;padding:6px 8px;width:100%}
+  .pecas{margin:0;padding:0;list-style:none;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px 16px;
+    font-size:13.5px;color:var(--ink-2)}
+  @media(max-width:560px){.pecas{grid-template-columns:minmax(0,1fr)}}
+  .pecas b{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--rosa-esc);
+    font-weight:500;margin-right:6px}
+  .regra5{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:6px}
+  .regra5 li{font-size:12.5px;padding:3px 9px;border-radius:3px;font-variant-numeric:tabular-nums}
+  .regra5 .sim{background:var(--async-soft);color:var(--async)}
+  .regra5 .nao{background:var(--surface-2);color:var(--muted)}
+
+  .trilha{gap:3px}
+  .trilha button{padding:6px 7px;font-size:13px;gap:5px}
+  .trilha .ok{font-size:10px}
+  .slots{display:flex;flex-wrap:wrap;gap:4px;min-height:32px;align-items:center}
+  .slot{width:34px;height:30px;display:grid;place-items:center;border:1.5px solid var(--async);border-radius:3px;
+    background:var(--async-soft);color:var(--async);font:500 11.5px var(--f-mono);font-variant-numeric:tabular-nums}
+  .slot.sumiu{border-style:dashed;border-color:var(--linha);background:transparent;color:var(--muted);opacity:.7}
+  .slot.perd{border-color:var(--erro);background:var(--erro-soft);color:var(--erro)}
+
+  [hidden]{display:none!important}
+  .semanas{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px;margin-bottom:8px}
+  @media(max-width:1080px){.semanas{grid-template-columns:repeat(2,minmax(0,1fr))}}
+  @media(max-width:520px){.semanas{grid-template-columns:minmax(0,1fr)}}
+  .semanas button{background:var(--surface);border:1px solid var(--linha);color:var(--ink-2);padding:8px 12px;
+    text-align:left;display:flex;flex-direction:column;gap:1px;font-weight:500;min-width:0}
+  .semanas button:hover{border-color:var(--rosa)}
+  .semanas .s-n{font-family:var(--f-mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--rosa-esc)}
+  .semanas .s-t{font-family:var(--f-display);font-size:17px;font-weight:600;color:var(--ink);line-height:1.15}
+  .semanas .s-c{font-family:var(--f-mono);font-size:10.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+  .semanas button.fechada .s-n::after{content:" ✓"}
+  .semanas button.now{background:var(--rosa);border-color:var(--rosa)}
+  .semanas button.now .s-n,.semanas button.now .s-t,.semanas button.now .s-c{color:var(--sobre-rosa)}
+  .trilha{gap:6px;margin-bottom:8px}
+  .trilha button{padding:6px 12px;font-size:14px;gap:8px}
+  .trilha .ok{font-size:10.5px}
+  .entrega-sem{background:var(--surface);border:1px solid var(--linha);border-left:3px solid var(--rosa);border-radius:0 6px 6px 0;
+    padding:9px 14px;margin-bottom:14px;font-size:13.5px;color:var(--ink-2);display:flex;gap:4px 14px;flex-wrap:wrap;align-items:baseline}
+  .entrega-sem b{color:var(--ink)}
+  .entrega-sem .rot{font-family:var(--f-mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--rosa-esc)}
+  .extra-pill{font-family:var(--f-mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;background:var(--surface-2);
+    color:var(--muted);padding:1px 6px;border-radius:3px;margin-right:6px}
+  .entregas{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:5px;font-size:13.5px;color:var(--ink-2)}
+  .entregas li{display:grid;grid-template-columns:78px minmax(0,1fr);gap:8px}
+  .entregas li > b{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--rosa-esc);font-weight:500;padding-top:2px}
+  .entregas strong{color:var(--ink);font-weight:600}
+  .nota-pe{font-size:12px !important;color:var(--muted) !important;margin-top:6px !important}
+</style>
+
+<style>body{margin:0}img{max-width:100%}</style>
+</head>
+<body>
+<header class="top">
+  <h1>Laboratório DI · Do dado à proteção</h1>
+  <p>Data Ingestion &amp; Protection · o caminho do dado em uma loja online, da ingestão à proteção, em cinco entregas semanais</p>
+</header>
+
+<div class="shell">
+  <nav class="semanas" id="semanas" aria-label="Semanas do laboratório"></nav>
+  <nav class="trilha" id="trilha" aria-label="Missões da semana"></nav>
+  <div class="entrega-sem" id="entregaSem"></div>
+
+  <div class="stage">
+    <div>
+      <div class="canvas">
+        <svg id="diagrama" viewBox="0 44 1090 410" role="img" aria-label="Plataforma de dados da loja online: origem, carga incremental, log de eventos, leitor rápido, bronze, validação, quarentena, silver, gold e os controles de governança e proteção">
+          <defs>
+            <marker id="mk-sync" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,1 L9,5 L0,9 z"/></marker>
+            <marker id="mk-async" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,1 L9,5 L0,9 z"/></marker>
+            <marker id="mk-desvio" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,1 L9,5 L0,9 z"/></marker>
+          </defs>
+          <g id="edges"></g>
+          <g id="nodes"></g>
+        </svg>
+      </div>
+      <div class="legend">
+        <span class="l-sync"><i></i><b>Lote</b> · carga que roda de tempos em tempos</span>
+        <span class="l-async"><i></i><b>Fluxo</b> · cada evento, em ordem</span>
+        <span class="l-contrato"><i></i><b>Regra</b> · acordo, contrato, chave e eliminação</span>
+        <span class="l-desvio"><i></i><b>Desvio</b> · o que não passou</span>
+      </div>
+      <div class="principios">
+        <div class="cab"><span>Entregas semanais</span><b id="princCont">0 de 5 fechadas</b></div>
+        <ul id="princLista"></ul>
+      </div>
+    </div>
+
+    <aside class="panel">
+      <div class="panel-head">
+        <span class="num" id="pNum">Missão 0</span>
+        <div class="hd">
+          <span class="bloco" id="pBloco"></span>
+          <h2 id="pTitle"></h2>
+        </div>
+      </div>
+      <div class="panel-body">
+        <div class="pills" id="pPills"></div>
+        <p class="lead" id="pLead"></p>
+        <dl class="beats" id="pBeats"></dl>
+        <div class="real"><b id="pRealT"></b><span id="pRealX"></span></div>
+      </div>
+      <div class="controls">
+        <button class="secundario" id="btnPrev" type="button">← Voltar</button>
+        <button class="primario" id="btnNext" type="button">Próxima missão →</button>
+      </div>
+    </aside>
+  </div>
+
+  <div class="work">
+    <section class="card" aria-labelledby="expT">
+      <div class="card-head"><span class="tag" id="expTag"></span><h3 id="expT"></h3></div>
+      <div class="card-body" id="expBody"></div>
+    </section>
+    <section class="card" aria-labelledby="buildT">
+      <div class="card-head"><span class="tag" id="buildTag"></span><h3 id="buildT"></h3></div>
+      <div class="card-body" id="buildBody"></div>
+    </section>
+  </div>
+
+  <div class="fim">
+    <button class="secundario" id="btnPrev2" type="button">← Missão anterior</button>
+    <button class="primario" id="btnNext2" type="button">Próxima missão →</button>
+  </div>
+  <p class="rodape">As setas do teclado trocam de missão. Clique em qualquer peça do desenho para voltar à missão em que ela entrou. O que o grupo marca e escreve fica salvo neste navegador.</p>
+</div>
+
+<script type="text/plain" id="txArvore">pipeline/
+├── dados/          dia 1, mudanças do dia 2, lote do dia 3, sintético
+├── contratos/      pedidos.yaml, clientes.yaml, navegacao.yaml
+├── ingestao/       carga incremental, log, produtor e leitores
+├── qualidade/      validação e quarentena
+├── governanca/     acordo.yaml, catalogo.md, regras como código
+├── seguranca/      matriz.md, pseudonimização, camada silver
+├── privacidade/    visão de consumo, moradas.md, esquecer
+├── resiliencia/    plano.md, cópia de segurança, reconstruir
+├── arquitetura/    fonte e imagem do desenho
+├── evidencias/     números de cada missão
+└── README.md       como rodar + peças da entrega</script>
+
+<script type="text/plain" id="txClientes">id,nome,email,cpf,nascimento,cidade,atualizado_em
+1,Ana Lima,ana.lima@example.com,111.111.111-11,1990-03-12,Santos,2026-10-01T09:00:00
+2,Bruno Reis,bruno.reis@example.com,222.222.222-22,1985-07-30,Campinas,2026-10-01T09:05:00
+3,Carla Nunes,carla.nunes@example.com,333.333.333-33,1998-11-02,Santos,2026-10-01T09:10:00
+4,Diego Prado,diego.prado@example.com,444.444.444-44,1979-01-21,Sorocaba,2026-10-01T09:15:00
+5,Elisa Moura,elisa.moura@example.com,555.555.555-55,2001-05-09,Campinas,2026-10-01T09:20:00
+6,Fábio Teles,fabio.teles@example.com,666.666.666-66,1993-09-17,Santos,2026-10-01T09:25:00</script>
+
+<script type="text/plain" id="txPedidos">id,cliente_id,valor_centavos,status,criado_em,atualizado_em,observacao
+101,1,12900,pago,2026-10-01T10:00:00,2026-10-01T10:02:00,
+102,2,4500,pago,2026-10-01T10:10:00,2026-10-01T10:11:00,entregar na portaria
+103,1,8990,cancelado,2026-10-01T11:00:00,2026-10-01T11:30:00,
+104,3,25000,pago,2026-10-01T11:20:00,2026-10-01T11:21:00,presente - avisar em carla.nunes@example.com
+105,4,3990,pendente,2026-10-01T12:00:00,2026-10-01T12:00:00,
+106,5,15900,pago,2026-10-01T13:15:00,2026-10-01T13:16:00,ligar para (13) 90000-0005 antes de entregar
+107,6,7200,pago,2026-10-01T14:40:00,2026-10-01T14:41:00,
+108,3,1990,pendente,2026-10-01T16:05:00,2026-10-01T16:05:00,</script>
+
+<script type="text/plain" id="txNavegacao">evento_id,cliente_id,ip,pagina,quando
+1,1,203.0.113.10,/produto/tenis,2026-10-01T09:58:00
+2,1,203.0.113.10,/carrinho,2026-10-01T09:59:00
+3,2,203.0.113.22,/produto/mochila,2026-10-01T10:08:00
+4,3,203.0.113.31,/produto/relogio,2026-10-01T11:15:00
+5,5,203.0.113.55,/produto/fone,2026-10-01T13:10:00
+6,,203.0.113.77,/home,2026-10-01T13:30:00
+7,6,203.0.113.61,/produto/camiseta,2026-10-01T14:35:00
+8,5,203.0.113.55,/carrinho,2026-10-01T13:12:00</script>
+
+<script type="text/plain" id="txDia2">Apliquem na origem, nesta ordem. Em cada alteração ou inserção,
+gravem em atualizado_em o horário indicado.
+
+1  ALTERAÇÃO  pedidos   id 105  status: pendente -> pago         2026-10-02T08:10:00
+2  ALTERAÇÃO  clientes  id 3    email: carla.n@example.com       2026-10-02T08:20:00
+3  INSERÇÃO   clientes  id 7    Gabi Rocha, gabi.rocha@example.com,
+                                777.777.777-77, 1996-02-25,
+                                Sorocaba                         2026-10-02T08:30:00
+4  INSERÇÃO   pedidos   id 109  cliente 7, 5600, pago, sem observação,
+                                criado em 2026-10-02T08:40:00    2026-10-02T08:40:00
+5  EXCLUSÃO   clientes  id 5    a cliente pediu a eliminação dos dados;
+                                o pedido 106 permanece</script>
+
+<script type="text/plain" id="txContrato">conjunto: pedidos
+versao: 1
+dono: a definir na Missão 5
+classe: a definir na Missão 5
+frescor: até 24 horas depois da mudança na origem
+campos:
+  - nome: id
+    tipo: inteiro
+    obrigatorio: true
+    unico: true
+  - nome: cliente_id
+    tipo: inteiro
+    obrigatorio: true
+  - nome: valor_centavos
+    tipo: inteiro
+    obrigatorio: true
+    minimo: 0
+  - nome: status
+    tipo: texto
+    obrigatorio: true
+    dominio: [pendente, pago, cancelado]
+  - nome: criado_em
+    tipo: data_hora
+    obrigatorio: true
+    maximo: momento da carga
+  - nome: observacao
+    tipo: texto
+    obrigatorio: false</script>
+
+<script type="text/plain" id="txDia3">id,cliente_id,valor_centavos,status,criado_em,observacao
+110,1,3300,pago,2026-10-03T09:00:00,
+111,2,-500,pago,2026-10-03T09:05:00,
+112,,4200,pago,2026-10-03T09:10:00,
+113,4,2100,enviado,2026-10-03T09:15:00,
+110,1,3300,pago,2026-10-03T09:00:00,
+114,2,1800,pago,2031-01-01T00:00:00,
+115,6,6100,pago,2026-10-03T09:25:00,</script>
+
+<script type="text/plain" id="txAcordo">conjuntos:
+  - nome: clientes
+    dono: time de ...          # um time da loja, nunca uma pessoa
+    classe: ...                # público | interno | confidencial | pessoal | pessoal sensível
+    retencao: ...              # prazo e o motivo (uso ou obrigação legal)
+    acesso: ...                # quem pede, quem aprova, o que se audita
+  - nome: pedidos
+    dono: ...
+    classe: ...
+    retencao: ...
+    acesso: ...
+  - nome: navegacao
+    dono: ...
+    classe: ...
+    retencao: ...
+    acesso: ...</script>
+
+<script type="text/plain" id="txMatriz">classe              proteção (cada linha soma à anterior)
+público / interno   cifra em trânsito e em repouso: o piso universal
+confidencial        + controle de acesso fino, máscara para papéis amplos, trilha de leitura
+pessoal             + máscara por padrão, token ou pseudônimo no pipeline, retenção executada
+pessoal sensível    + criptografia de coluna, acesso por exceção auditada, cofre de reversão
+em todas            varredura do que escapou do mapa; teste sempre sintético ou mascarado</script>
+
+<script type="text/plain" id="txConfiavel">silver.clientes
+  cliente_ps      pseudônimo = HMAC-SHA-256(CHAVE_PSEUDONIMO, id do cliente)
+  nascimento      generalizado na Missão 7
+  cidade
+
+silver.pedidos
+  id
+  cliente_ps      o mesmo pseudônimo, para a junção funcionar
+  valor_centavos
+  status
+  criado_em
+
+silver.navegacao
+  evento_id
+  cliente_ps      vazio para visitante sem cadastro
+  pagina
+  quando
+
+Não entram: nome, email, cpf, id do cliente, observacao, ip.</script>
+
+<script type="text/plain" id="txMoradas">morada                          o que há da titular     técnica       por quê
+origem · clientes               ...
+origem · pedidos.observacao     ...
+origem · navegacao              ...
+log · tópicos mudancas e navegacao ...
+estado dos leitores do log      ...
+camada bronze                      ...
+camada silver                  ...
+cópia de segurança              ...
+saídas e evidências do pipeline ...</script>
+
+<script type="text/plain" id="txPlano">sistema            RPO     RTO     cópias (onde · como · por quanto tempo)    responsável
+origem             ...     ...     ...
+log de mudanças    ...     ...     ...
+camada bronze         ...     ...     ...
+camada silver     ...     ...     reconstruída a partir da camada bronze
+chave              ...     ...     ...   (sem ela, o resto é lixo cifrado)
+
+3 cópias · 2 locais · 1 fora · 1 imutável · 0 erros no teste
+Qual cópia é imutável? Qual fica isolada, com credencial independente?</script>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ================= estado salvo no navegador ================= */
+  var CHAVE = "lab-di-dado-protecao-v4";
+  var salvo = {checks:{}, matriz:{}, missao:0};
+  try{
+    var bruto = localStorage.getItem(CHAVE);
+    if(bruto){
+      var lido = JSON.parse(bruto);
+      if(lido && typeof lido === "object"){
+        salvo.checks = lido.checks || {};
+        salvo.matriz = lido.matriz || {};
+        salvo.missao = typeof lido.missao === "number" ? lido.missao : 0;
+      }
+    }
+  }catch(e){ /* sem armazenamento: a página funciona do mesmo jeito */ }
+  function salvar(){ try{ localStorage.setItem(CHAVE, JSON.stringify(salvo)); }catch(e){} }
+
+  function $(id){ return document.getElementById(id); }
+  function texto(id){ return $(id).textContent; }
+  function reais(c){ return (c / 100).toLocaleString("pt-BR", {style:"currency", currency:"BRL"}); }
+
+  function copiar(txt, btn){
+    var ok = function(){ var a = btn.textContent; btn.textContent = "Copiado"; setTimeout(function(){ btn.textContent = a; }, 1400); };
+    try{ navigator.clipboard.writeText(txt).then(ok, function(){ btn.textContent = "Selecione e copie"; }); }
+    catch(e){ btn.textContent = "Selecione e copie"; }
+  }
+  function blocoCodigo(txt, rotulo){
+    var w = document.createElement("div"); w.className = "codewrap";
+    var pre = document.createElement("pre"); pre.className = "code"; pre.textContent = txt;
+    if(rotulo){ pre.setAttribute("aria-label", rotulo); }
+    pre.tabIndex = 0;
+    var b = document.createElement("button"); b.type = "button"; b.className = "copy"; b.textContent = "Copiar";
+    b.addEventListener("click", function(){ copiar(txt, b); });
+    w.appendChild(pre); w.appendChild(b);
+    return w;
+  }
+
+  /* ================= diagrama ================= */
+  var NODES = [
+    {id:"origem",  x:20,  y:190, w:140, h:56, l:["Origem"],              s:"banco + cliques",   k:"client"},
+    {id:"bruta",   x:320, y:190, w:150, h:56, l:["Bronze"],              s:"cópia fiel da origem",            k:""},
+    {id:"log",     x:150, y:300, w:200, h:46, l:["Log de eventos"],      s:"só anexa · lê pelo offset", k:"broker"},
+    {id:"visitas", x:150, y:392, w:170, h:46, l:["Leitor rápido"],       s:"visitas por página",             k:""},
+    {id:"docG",    x:315, y:70,  w:160, h:46, l:["acordo de governança"],s:"dono · classe · retenção",       k:"doc"},
+    {id:"docC",    x:545, y:70,  w:130, h:46, l:["contrato"],            s:"campos · regras",                k:"doc"},
+    {id:"valida",  x:540, y:190, w:140, h:56, l:["Validação"],           s:"aplica o contrato",              k:""},
+    {id:"quar",    x:540, y:304, w:140, h:50, l:["Quarentena"],          s:"linha + motivo",                 k:"ext"},
+    {id:"conf",    x:750, y:190, w:150, h:56, l:["Silver"],              s:"validada · protegida",  k:""},
+    {id:"docS",    x:760, y:70,  w:130, h:46, l:["chave secreta"],       s:"fora do código",                 k:"doc"},
+    {id:"consumo", x:950, y:190, w:120, h:56, l:["Gold"],                s:"consumo · agregado",             k:"client"},
+    {id:"elim",    x:750, y:308, w:150, h:42, l:["lista de eliminação"], s:"",                               k:"dado"},
+    {id:"copia",   x:365, y:392, w:150, h:42, l:["cópia de segurança"],  s:"",                               k:"dado"}
+  ];
+  var EDGES = [
+    {id:"e_lote",     d:"M160,218 H314",      k:"sync",  lb:{x:237, y:209, t:"carga incremental", a:"middle"}},
+    {id:"e_or_log",   d:"M90,246 V323 H144",  k:"async"},
+    {id:"e_log_br",   d:"M350,323 H370 V252", k:"async", lb:{x:380, y:292, t:"em ordem", a:"start"}},
+    {id:"e_log_vis",  d:"M235,346 V386",      k:"async"},
+    {id:"e_gov",      d:"M395,116 V190",      k:"contrato"},
+    {id:"e_br_val",   d:"M470,218 H534",      k:"sync"},
+    {id:"e_val_conf", d:"M680,218 H744",      k:"sync"},
+    {id:"e_doc_val",  d:"M610,116 V190",      k:"contrato"},
+    {id:"e_val_quar", d:"M610,246 V298",      k:"desvio"},
+    {id:"e_seg_conf", d:"M825,116 V190",      k:"contrato"},
+    {id:"e_conf_cons",d:"M900,218 H944",      k:"sync"},
+    {id:"e_elim",     d:"M825,308 V246",      k:"contrato"},
+    {id:"e_copia",    d:"M440,246 V392",      k:"dado"}
+  ];
+
+  /* peças da entrega final: a missão i (1 a 10) deixa a peça i - 1 pronta */
+  var PECAS = [
+    {n:"Carga incremental",          d:"ex.: ingestao/carga; segunda execução lê 0 linhas"},
+    {n:"Log de mudanças",            d:"ex.: tabela mudancas + posição salva; exclusão chega à camada bronze"},
+    {n:"Fluxo com vários leitores",  d:"ex.: tópico navegacao; visitas e bronze com offsets próprios; leitor novo relê do 0"},
+    {n:"Contrato e quarentena",      d:"ex.: contratos/pedidos.yaml; 5 linhas do dia 3 isoladas com motivo"},
+    {n:"Acordo de governança",       d:"ex.: governanca/acordo.yaml, catálogo gerado, regra que barra o pipeline"},
+    {n:"Matriz e trajeto do CPF",    d:"ex.: seguranca/matriz.md; CPF real só na origem e na camada bronze"},
+    {n:"Visão de consumo",           d:"ex.: receita_por_cidade com limiar K = 2; Campinas suprimida"},
+    {n:"Esquecimento com evidência", d:"ex.: esquecer 5 trata 6 moradas; lista de eliminação sem dado pessoal"},
+    {n:"Plano de resiliência",       d:"ex.: resiliencia/plano.md; ensaio restaurou em 4 min com os mesmos números"},
+    {n:"Desenho e README",           d:"ex.: arquitetura/estrutura.png e arquitetura/vida-do-dado.png"}
+  ];
+
+  /* cinco entregas semanais: cada uma parte da anterior */
+  var SEMANAS = [
+    {t:"Ingestão do banco",           m:[0, 1, 2], h:"≈ 1h45"},
+    {t:"Fluxo e contrato",            m:[3, 4],    h:"≈ 1h30"},
+    {t:"Governança e segurança",      m:[5, 6],    h:"≈ 1h30"},
+    {t:"Privacidade e esquecimento",  m:[7, 8],    h:"≈ 1h25"},
+    {t:"Resiliência e entrega final", m:[9, 10],   h:"≈ 1h15"}
+  ];
+
+  /* ================= missões ================= */
+  var MISSOES = [
+    {
+      curto:"Briefing", bloco:"A disciplina em um projeto", t:"Uma loja online e o caminho do dado", tempo:"15 min",
+      pills:["ponto de partida"],
+      n:["origem"], e:[],
+      lead:"Uma loja online guarda clientes, pedidos e cliques. O grupo vai construir o caminho desses dados, do INSERT no banco até um destino governado, protegido e restaurável.",
+      beats:[
+        ["Dois tipos de dado","<b>Dado de banco</b> (clientes, pedidos): pequeno, precioso, muda de valor e a ordem importa. <b>Dado de atividade</b> (navegação): muito maior, só acrescenta e interessa agregado."],
+        ["O arco da disciplina","Ingestão (Aulas 1 a 3), plataforma (4 a 6) e proteção (7 a 9). Cada missão retoma uma aula e deixa pronta uma peça da entrega final."],
+        ["O ritmo de cada aula","Primeiro a introdução: o professor apresenta o conceito e a simulação. Depois o exercício, feito pelo grupo em plataforma livre e entregue antes da aula seguinte. Cada entrega parte da anterior: é um projeto só, que cresce."]
+      ],
+      realT:"Em uma frase",
+      real:"Do INSERT ao cofre imutável: o ciclo de vida completo do dado, projetado e construído pelo grupo.",
+      expTag:"Introdução", expT:"As regras, as entregas e onde fazer", exp:expRegras,
+      buildTag:"Exercício", buildT:"A origem e o repositório",
+      tasks:[
+        "Formem o grupo e escolham onde vão trabalhar (ao lado), a linguagem, o banco da origem e onde ficam as camadas de destino.",
+        "Criem o repositório com a estrutura de pastas abaixo.",
+        "Criem as tabelas <code>clientes</code>, <code>pedidos</code> e <code>navegacao</code> na origem e carreguem os dados do dia 1. Sem chave estrangeira entre elas: o pedido precisa sobreviver à exclusão do cliente.",
+        "Escolham a ferramenta de desenho e comecem a visão de estrutura. Ela é atualizada a cada entrega semanal."
+      ],
+      blocos:[
+        {t:"Estrutura do repositório", id:"txArvore", aberto:true},
+        {t:"Dia 1 · clientes.csv", id:"txClientes"},
+        {t:"Dia 1 · pedidos.csv", id:"txPedidos"},
+        {t:"Dia 1 · navegacao.csv", id:"txNavegacao"}
+      ],
+      checksT:"Confiram na origem",
+      checks:[
+        {esp:"6 clientes, 8 pedidos e 8 eventos de navegação."},
+        {esp:"Receita paga (soma de <code>valor_centavos</code> com <code>status</code> pago): <b>R$ 655,00</b>."}
+      ],
+      entregaT:"Antes de começar",
+      entrega:"O primeiro commit: o <code>README.md</code> com os nomes do grupo e as escolhas de linguagem e banco. Os dados são fictícios: os CPFs são inválidos de propósito e os IPs pertencem a uma faixa reservada para documentação."
+    },
+    {
+      curto:"Carga", bloco:"Aula 2 · Ingestão em lote e ELT", t:"Carregar só o que mudou", tempo:"40 min",
+      pills:["Carga incremental","Idempotência"],
+      n:["bruta"], e:["e_lote"],
+      lead:"A primeira ingestão copia a origem para a camada bronze. O desafio é a segunda execução: ela precisa ler pouco e não estragar o que já está lá.",
+      beats:[
+        ["Carga incremental","Trazer só as linhas alteradas desde a última execução, usando uma marca-d'água: o maior <code>atualizado_em</code> já carregado. A carga completa de toda noite custa o tamanho da tabela, mesmo que dez linhas tenham mudado."],
+        ["Idempotência","Rodar de novo com a mesma entrada não muda o resultado. Toda carga falha um dia e precisa ser repetida: se repetir duplica, o número do relatório passa a mentir."],
+        ["A camada bronze","Ela guarda o dado como chegou, sem transformar, com colunas de controle: quando chegou e em qual execução. O dado de atividade entra por anexação, e a chave do evento impede a duplicata."]
+      ],
+      realT:"O limite desta técnica",
+      real:"A marca-d'água só enxerga linhas que existem. Um DELETE não deixa linha para ler, e o destino guarda o registro para sempre. A Missão 2 resolve isso.",
+      expTag:"Introdução · simulação", expT:"Rode a carga duas vezes", exp:expCarga,
+      buildTag:"Exercício", buildT:"A carga incremental",
+      tasks:[
+        "Escrevam a carga que copia <code>clientes</code> e <code>pedidos</code> da origem para a camada bronze, sem transformar nada.",
+        "Acrescentem a cada linha as colunas de controle <code>_carregado_em</code> e <code>_execucao</code>.",
+        "Guardem a marca-d'água de cada tabela fora do código (arquivo ou tabela de estado) e leiam só o que tem <code>atualizado_em</code> maior que ela.",
+        "Gravem por mesclagem pela chave <code>id</code>: linha nova entra, linha existente é substituída.",
+        "Carreguem <code>navegacao</code> por anexação, usando <code>evento_id</code> para não duplicar ao rodar de novo.",
+        "Apliquem na origem as mudanças do dia 2 (abaixo) e rodem a carga outra vez."
+      ],
+      blocos:[{t:"Mudanças do dia 2", id:"txDia2"}],
+      checksT:"Verifique",
+      checks:[
+        {esp:"Primeira execução: 6 clientes, 8 pedidos e 8 eventos na camada bronze."},
+        {esp:"Segunda execução, sem nenhuma mudança na origem: lê 0 linhas e os totais continuam 6, 8 e 8."},
+        {esp:"Depois das mudanças do dia 2: a execução lê <b>4 linhas</b> (pedidos 105 e 109, clientes 3 e 7)."},
+        {esp:"Camada bronze: 7 clientes, 9 pedidos, receita paga de <b>R$ 750,90</b>."},
+        {esp:"A cliente 5 foi excluída na origem e continua na camada bronze. Anotem: é o ponto de partida da Missão 2."}
+      ],
+      entrega:"Código em <code>ingestao/</code> e os números das cinco verificações em <code>evidencias/missao1.txt</code>."
+    },
+    {
+      curto:"Mudanças", bloco:"Aula 3 · CDC: o banco conta o que mudou", t:"Capturar cada mudança", tempo:"50 min",
+      pills:["Log","Offset","CDC"],
+      n:["log"], e:["e_or_log","e_log_br"],
+      lead:"Em vez de perguntar à tabela o que mudou, o pipeline passa a ler o registro de cada inserção, alteração e exclusão, na ordem em que aconteceram.",
+      beats:[
+        ["O log","Um registro em que só se anexa no fim e nunca se edita. Cada mudança do banco vira um evento, na ordem do commit. É a garantia que a consulta por <code>atualizado_em</code> não dá."],
+        ["O offset","A posição do último evento aplicado é o único estado do consumidor. Cair e voltar é retomar dali. Um destino novo começa do zero e assiste à história."],
+        ["Captura de mudanças (CDC)","Os bancos já mantêm esse registro para a própria recuperação, o log de transações. Ferramentas de CDC o leem e publicam cada mudança. A caixa de saída (<i>outbox</i>) faz o mesmo no nível da aplicação."]
+      ],
+      realT:"Conexão",
+      real:"A exclusão que o log transporta é a mesma que vai atender ao pedido de eliminação da Missão 8. Sem capturar exclusões, não há como esquecer alguém nas cópias.",
+      expTag:"Introdução · simulação", expT:"O que a marca-d'água não vê", exp:expMudancas,
+      buildTag:"Exercício", buildT:"O log de mudanças",
+      tasks:[
+        "Façam a origem registrar cada mudança de <code>clientes</code> e <code>pedidos</code> em um log ordenado: sequência, tabela, operação (inserção, alteração ou exclusão), chave e dados.<span class=\"trilhas\"><b>Trilha A, sem infraestrutura:</b> uma tabela <code>mudancas</code> na origem, preenchida por gatilhos ou pelo próprio programa que altera os dados.<br><b>Trilha B, com ferramenta:</b> leitura do log do banco por replicação lógica ou por uma ferramenta livre de CDC, com broker se o grupo quiser.</span>",
+        "O pipeline guarda o offset (a posição do último evento aplicado) e, a cada execução, aplica só o que veio depois, em ordem.",
+        "Exclusão na origem vira exclusão na camada bronze.",
+        "Reaplicar um trecho do log já aplicado não muda o resultado.",
+        "Voltem a origem e a camada bronze ao estado do dia 1, liguem a captura e apliquem de novo as mudanças do dia 2."
+      ],
+      blocos:[{t:"Mudanças do dia 2", id:"txDia2"}],
+      checksT:"Verifique",
+      checks:[
+        {esp:"O log registra <b>5 eventos</b>, na ordem em que foram aplicados."},
+        {esp:"Camada bronze depois de sincronizar: <b>6 clientes</b> (sem a cliente 5), 9 pedidos, e-mail novo no cliente 3."},
+        {esp:"O pedido 106 continua lá. Receita paga: <b>R$ 750,90</b>."},
+        {esp:"Reaplicar o log desde o primeiro evento: mesmos números."}
+      ],
+      entrega:"Código em <code>ingestao/</code>, o conteúdo do log e os números em <code>evidencias/missao2.txt</code> e, no README, a trilha escolhida e o motivo."
+    },
+    {
+      curto:"Fluxo", bloco:"Aula 3 · Streaming: por que o Kafka existe", t:"Um log, vários leitores", tempo:"50 min",
+      pills:["Tópico","Leitores","Retenção","Releitura"],
+      n:["visitas"], e:["e_log_vis"],
+      lead:"Os cliques da loja não cabem em carga de hora em hora: são muitos, há quem precise deles agora e quem precise de todos de uma vez. A navegação passa a correr pelo mesmo log, e cada leitor anda no seu ritmo.",
+      beats:[
+        ["Fila × log","A fila entrega e esquece: a mensagem some ao ser consumida, o que ainda não foi lido fica na memória, e um leitor lento põe todos em risco. O log guarda por tempo, e não até ser lido."],
+        ["Cada leitor, um offset","O log não sabe quem leu o quê. O leitor rápido e o leitor em rajadas leem os mesmos eventos sem se atrapalhar, e um leitor novo começa do offset 0 e assiste à história."],
+        ["Pelo menos uma vez","Quem salva o offset depois de processar pode repetir um evento ao voltar de uma queda. Quem salva antes pode perder um. A saída é entregar pelo menos uma vez e processar de forma idempotente."]
+      ],
+      realT:"Ideia-chave",
+      real:"Com um log no meio, N fontes e M destinos deixam de exigir N × M canos sob medida. Cada fonte publica uma vez, cada destino se liga sozinho: são N + M conexões.",
+      expTag:"Introdução · simulação", expT:"Dois ritmos, um log", exp:expFluxo,
+      buildTag:"Exercício", buildT:"O tópico de navegação e os leitores",
+      tasks:[
+        "Criem no log o tópico <code>navegacao</code>, ao lado do tópico de mudanças da Missão 2.<span class=\"trilhas\"><b>Trilha A, sem infraestrutura:</b> um arquivo ou uma tabela em que só se anexa, com uma sequência por evento.<br><b>Trilha B, com broker:</b> Kafka, NATS ou RabbitMQ, com a chave do evento igual ao <code>cliente_id</code>, para manter a ordem por cliente.</span>",
+        "Escrevam o produtor: ele publica os 8 eventos de navegação do dia 1, um a cada segundo, e não sabe quem vai ler.",
+        "Escrevam o leitor rápido <code>visitas</code>: ele lê cada evento assim que chega e mantém a contagem de visitas por página.",
+        "Liguem a bronze ao mesmo tópico como leitor lento: ela acorda a cada 5 segundos e grava em rajada o que chegou desde o seu offset. A carga em lote da navegação, da Missão 1, sai de cena.",
+        "Cada leitor guarda o próprio offset. Decidam se ele é salvo antes ou depois de processar, e registrem no README o que acontece em cada caso quando o leitor cai no meio.",
+        "Com tudo já publicado, liguem um leitor novo, <code>por_cliente</code>, que conta eventos por cliente desde o offset 0. O produtor e os outros leitores não podem ser alterados."
+      ],
+      checksT:"Verifique",
+      checks:[
+        {esp:"Durante a publicação, o leitor rápido está sempre no último evento e a bronze fica até 5 eventos atrás. O atraso de um não segura o outro."},
+        {esp:"Ao fim: <code>visitas</code> mostra <b>/carrinho com 2 visitas</b> e as outras seis páginas com 1. A bronze tem os mesmos <b>8 eventos</b>, sem duplicata."},
+        {esp:"Derrubem o <code>visitas</code> depois do 4º evento e religuem quando o produtor terminar: ele retoma do offset salvo e chega aos mesmos totais, sem contar nenhum evento duas vezes."},
+        {esp:"O leitor novo, ligado depois de tudo, encontra os 8 eventos: clientes 1 e 5 com 2 eventos cada, clientes 2, 3 e 6 com 1, e 1 evento de visitante sem cadastro."},
+        {esp:"Depois de todos lerem, o log continua com os 8 eventos: ele guarda por tempo, e não até ser lido."}
+      ],
+      entrega:"Código em <code>ingestao/</code>, as saídas dos três leitores em <code>evidencias/missao3.txt</code> e, no README, a decisão sobre o offset."
+    },
+    {
+      curto:"Contrato", bloco:"Aulas 4 e 5 · Lakehouse, qualidade e contratos", t:"Barrar o dado ruim na porta", tempo:"40 min",
+      pills:["Camadas","Contrato de dados","Quarentena"],
+      n:["docC","valida","quar","conf"], e:["e_br_val","e_val_conf","e_doc_val","e_val_quar"],
+      lead:"No dia 3 chega um lote de pedidos por arquivo, e ele tem defeitos. Nada passa da bronze para a silver sem cumprir o contrato.",
+      beats:[
+        ["As camadas","<b>Bronze</b> guarda como chegou. <b>Silver</b> só recebe o que passou na validação. <b>Gold</b> serve o consumo. Cada camada faz uma promessa diferente a quem lê."],
+        ["O contrato de dados","O acordo escrito entre quem produz e quem consome: campos, tipos, regras, frescor e dono. A validação o aplica a cada lote, linha por linha, antes de promover o dado."],
+        ["Por que existe","O pipeline terminava com sucesso e o relatório saía errado. O defeito era descoberto dias depois por quem lia o número, e ninguém sabia em qual etapa ele tinha entrado."]
+      ],
+      realT:"Fixe isto",
+      real:"Dado ruim não é apagado nem consertado em silêncio. Ele vai para a quarentena com o motivo, e o restante do lote segue.",
+      expTag:"Introdução · simulação", expT:"O lote chegou assim", exp:expContrato,
+      buildTag:"Exercício", buildT:"O contrato, o validador e a quarentena",
+      tasks:[
+        "Salvem o contrato de pedidos (abaixo) como <code>contratos/pedidos.yaml</code>.",
+        "Escrevam <code>contratos/clientes.yaml</code> e <code>contratos/navegacao.yaml</code> no mesmo formato. Dono e classe serão preenchidos na Missão 5.",
+        "Escrevam o validador: ele lê o contrato e decide, linha por linha, o que segue para a camada silver. As regras vêm do arquivo de contrato, não ficam fixas no código.",
+        "Linha reprovada vai para a quarentena com o motivo e a execução em que chegou.",
+        "Carreguem o lote do dia 3 na camada bronze e rodem a validação sobre todos os pedidos."
+      ],
+      blocos:[
+        {t:"Contrato de pedidos", id:"txContrato"},
+        {t:"Lote do dia 3 · pedidos_dia3.csv", id:"txDia3"}
+      ],
+      checksT:"Verifique",
+      checks:[
+        {esp:"Do lote do dia 3, <b>2 linhas</b> são aceitas (pedidos 110 e 115) e <b>5 vão para a quarentena</b>."},
+        {esp:"Cada linha em quarentena traz um motivo diferente: valor negativo, cliente ausente, status fora do domínio, chave repetida e data no futuro."},
+        {esp:"Camada silver: 11 pedidos. Receita paga: <b>R$ 844,90</b>."},
+        {esp:"Sem a validação, o mesmo cálculo daria R$ 932,90. Guardem esse número para a apresentação."}
+      ],
+      entrega:"Contratos em <code>contratos/</code>, código em <code>qualidade/</code>, a quarentena com os motivos e os números em <code>evidencias/missao4.txt</code>."
+    },
+    {
+      curto:"Governança", bloco:"Aula 6 · Governança e Catálogo de Dados", t:"Quem manda neste dado?", tempo:"45 min",
+      pills:["Dono","Classificação","Retenção","Catálogo"],
+      n:["docG"], e:["e_gov"],
+      lead:"O dado chega e é confiável. Antes de proteger, o grupo toma as decisões que cabem à governança: quem é o dono, qual é a classe e quanto tempo cada conjunto vive.",
+      beats:[
+        ["Governar é decidir pouco e bem","Quatro decisões: o <b>dono</b> (um time, nunca uma pessoa), a <b>classe</b>, a definição oficial e o <b>prazo de vida</b>. O resto é autonomia de quem constrói. Quem produz o dado costuma ser o melhor dono."],
+        ["Classificar na origem","Público, interno, confidencial, pessoal, pessoal sensível. O produtor marca a classe no contrato, campo a campo. A classe dita a proteção das próximas missões. O dado pessoal escondido (um IP, um e-mail em texto livre) é o que fica de fora do mapa."],
+        ["Catálogo vivo e regra como código","Catálogo digitado à mão morre em três meses: 90% vem das ferramentas, 10% é contexto humano. E a regra que importa vira verificação automática, não pauta de reunião."]
+      ],
+      realT:"Fixe isto",
+      real:"Classificação é o pré-requisito de toda proteção: primeiro saiba o que é sensível, depois tranque na medida.",
+      expTag:"Introdução · simulação", expT:"Ache o dado pessoal escondido", exp:expEscondido,
+      buildTag:"Exercício", buildT:"O acordo de governança e o catálogo",
+      tasks:[
+        "Escrevam <code>governanca/acordo.yaml</code> no modelo abaixo: dono, classe, retenção e acesso para <code>clientes</code>, <code>pedidos</code> e <code>navegacao</code>. Defendam o dono mais difícil no README.",
+        "Completem os três contratos com a classe de cada campo. A classe do conjunto é a do campo mais sensível.",
+        "Justifiquem três prazos de retenção: navegação (volume alto, uso curto), pedidos (obrigação fiscal) e clientes (enquanto durar a relação).",
+        "Gerem <code>governanca/catalogo.md</code> por script, a partir dos contratos e do acordo: descrição, dono, classe, campos e frescor. Nada digitado duas vezes.",
+        "Escrevam uma regra como código que faz o pipeline falhar: nenhum conjunto de classe pessoal sem retenção definida.",
+        "Escrevam um varredor simples que procura e-mail, telefone, CPF e IP nas colunas da camada bronze, inclusive nas de texto livre."
+      ],
+      blocos:[{t:"Modelo do acordo de governança", id:"txAcordo", aberto:true}],
+      checksT:"Verifique",
+      checks:[
+        {esp:"Apaguem a retenção de <code>navegacao</code> no acordo e rodem o pipeline: ele para com uma mensagem clara. Devolvam o prazo e ele passa."},
+        {esp:"O varredor aponta dado pessoal onde ninguém declarou: <b>2 pedidos</b> com dado pessoal em <code>observacao</code> (104 e 106) e a coluna <code>ip</code> nos 8 eventos."},
+        {esp:"Mudem uma descrição no contrato e gerem o catálogo de novo: a mudança aparece sem ninguém editar o catálogo."}
+      ],
+      entrega:"<code>governanca/acordo.yaml</code>, o catálogo gerado, a regra como código e a saída do varredor em <code>evidencias/missao5.txt</code>."
+    },
+    {
+      curto:"Segurança", bloco:"Aula 7 · Segurança do Dado", t:"Cada classe com a sua tranca", tempo:"50 min",
+      pills:["Cifra","Token","Máscara","Chave"],
+      n:["docS"], e:["e_seg_conf"],
+      lead:"A classe definida na Missão 5 agora executa. O grupo decide, etapa por etapa, onde o dado pessoal é real, onde vira código e onde nem aparece.",
+      beats:[
+        ["O piso","Dado em movimento, dado cifrado. Dado em repouso, também. Rede interna deixou de ser desculpa. No desenho do grupo, cada seta e cada camada recebem essa marca."],
+        ["Token e máscara","Com o identificador trocado por um código, o mesmo cliente gera sempre o mesmo código: a junção funciona e o valor real não circula. A máscara mostra o dado transformado conforme o papel de quem consulta."],
+        ["A chave e o ambiente de teste","A segurança da criptografia mora na gestão da chave: acesso à chave é acesso ao dado. E dado pessoal real não entra em ambiente de teste: sintético ou mascarado, sempre."]
+      ],
+      realT:"Fixe isto",
+      real:"Mascare por padrão, revele por exceção auditada. A proteção sobe com a classe: do piso cifrado ao cofre de coluna.",
+      expTag:"Introdução · simulação", expT:"Siga o CPF", exp:expTrajeto,
+      buildTag:"Exercício", buildT:"A matriz, o pseudônimo e a camada silver",
+      tasks:[
+        "Escrevam <code>seguranca/matriz.md</code>: para cada classe usada no acordo, a proteção exigida. A matriz da aula está abaixo como ponto de partida.",
+        "Gerem o pseudônimo <code>cliente_ps</code> com HMAC-SHA-256 do id do cliente. A chave vem da variável de ambiente <code>CHAVE_PSEUDONIMO</code> e não aparece no código nem no repositório.",
+        "Montem a camada silver no formato abaixo: sem nome, e-mail, CPF, <code>observacao</code> nem <code>ip</code>, e com o mesmo pseudônimo nas três tabelas.",
+        "Separem dois papéis: o pipeline lê a camada bronze, o analista lê só a silver. Registrem no README como o grupo garante isso (usuários, permissões ou pastas).",
+        "EXTRA:Gerem um conjunto sintético em <code>dados/sintetico/</code>, com a mesma forma e nenhuma pessoa real, e rodem o pipeline inteiro com ele.",
+        "Registrem o trajeto do CPF do pipeline de vocês: em cada etapa, real, token, máscara ou ausente."
+      ],
+      blocos:[
+        {t:"A matriz classe × proteção da aula", id:"txMatriz"},
+        {t:"Formato da camada silver", id:"txConfiavel", aberto:true}
+      ],
+      checksT:"Verifique",
+      checks:[
+        {esp:"Busquem <code>@</code>, CPFs, telefones e IPs em toda a camada silver: nenhuma ocorrência."},
+        {esp:"Duas execuções com a mesma chave geram os mesmos pseudônimos. Com outra chave, todos mudam."},
+        {esp:"Busquem o valor da chave no repositório inteiro: nenhuma ocorrência."},
+        {esp:"Se fizerem o extra: o pipeline roda do início ao fim com os dados sintéticos, sem tocar nos dados da loja."}
+      ],
+      entrega:"<code>seguranca/matriz.md</code>, o trajeto do CPF, o código em <code>seguranca/</code> e os resultados das buscas em <code>evidencias/missao6.txt</code>."
+    },
+    {
+      curto:"Privacidade", bloco:"Aula 8 · Privacidade e LGPD na Prática", t:"Pseudônimo não é anônimo", tempo:"40 min",
+      pills:["Minimização","K-anonimato","Agregado"],
+      n:["consumo"], e:["e_conf_cons"],
+      lead:"A camada silver não mostra nomes, e mesmo assim alguém pode ser encontrado. O grupo aplica minimização e generalização, e entrega ao consumo só o que não isola ninguém.",
+      beats:[
+        ["Dado pessoal","É o que chega à pessoa, direta ou indiretamente. Dado pseudonimizado ainda é pessoal perante a LGPD (art. 13, § 4º). Só o anônimo de verdade, sem volta nem cruzando com outras bases, sai da lei."],
+        ["Minimização","Cada campo pessoal se justifica ou sai. A pergunta de revisão: para que exatamente precisamos deste campo? Sem resposta, sem campo."],
+        ["K-anonimato","Cada combinação de atributos aparece em pelo menos K pessoas: ninguém é único. Generaliza-se até lá (idade vira faixa), e o agregado só sai com um mínimo de pessoas no grupo."]
+      ],
+      realT:"Fixe isto",
+      real:"Minimização é a única segurança perfeita: o dado que não foi coletado não vaza, não custa e não responde processo.",
+      expTag:"Introdução · simulação", expT:"Tente reidentificar a Carla", exp:expProtecao,
+      buildTag:"Exercício", buildT:"A visão de consumo",
+      tasks:[
+        "Para cada campo pessoal que restou na camada silver, registrem a finalidade no contrato. Campo sem finalidade sai.",
+        "Generalizem o nascimento em faixa etária (25–34, 35–44, 45–54) na camada silver.",
+        "Meçam o K da tabela de clientes da camada silver, usando cidade + faixa etária, e registrem quantas combinações têm uma pessoa só.",
+        "Construam na camada gold a visão de consumo <code>receita_por_cidade</code>: cidade, número de clientes e receita paga.",
+        "Apliquem o limiar mínimo K = 2: cidade com menos de 2 clientes aparece como suprimida."
+      ],
+      checksT:"Verifique",
+      checks:[
+        {esp:"K da tabela de clientes: <b>4 combinações</b> de cidade + faixa etária têm uma pessoa só. É por isso que o consumo recebe agregado, e não a tabela."},
+        {esp:"Visão de consumo com K = 2: Santos <b>R$ 545,00</b> (3 clientes), Sorocaba <b>R$ 95,90</b> (2 clientes) e Campinas <b>suprimida</b> (1 cliente)."},
+        {esp:"O total geral continua <b>R$ 844,90</b>: inclui a cidade suprimida e os R$ 159,00 do pedido 106, que não tem mais cadastro."},
+        {esp:"Com K = 3, Sorocaba também é suprimida."}
+      ],
+      entrega:"Código em <code>privacidade/</code>, a medição de K e a visão de consumo em <code>evidencias/missao7.txt</code>."
+    },
+    {
+      curto:"Esquecer", bloco:"Aula 8 · O direito de ser esquecido", t:"Me esqueçam, de verdade", tempo:"45 min",
+      pills:["Moradas","Tombstone","Crypto-shredding","Evidência"],
+      n:["elim"], e:["e_elim"],
+      lead:"A cliente 5 pediu a eliminação. O cadastro já saiu pelo log, mas ela ainda vive em outros lugares do pipeline. O grupo encontra todas as moradas e escolhe a técnica de cada uma.",
+      beats:[
+        ["As moradas do titular","Tabelas, eventos do log, camadas, cópias de segurança, saídas do pipeline e campos de texto livre. Responder ao pedido começa por listar onde a pessoa está. Quem esquece uma morada aprende do pior jeito."],
+        ["Uma técnica por morada","DELETE propagado nas tabelas. Marcador de exclusão e retenção curta no log, que não se edita. Crypto-shredding: cifrar os dados de cada titular com chave própria e apagar a chave. Na cópia de segurança, deixar expirar e não restaurar o eliminado."],
+        ["O que fica, e a prova","A LGPD garante a eliminação (art. 18, VI) e admite guardar o que a obrigação legal exige (art. 16, I). O pedido fica, sem pessoa. E toda eliminação gera evidência de que aconteceu."]
+      ],
+      realT:"Ideia-chave",
+      real:"Crypto-shredding inverte o problema: em vez de caçar o dado em mil lugares, mata-se a chave em um lugar só, e mil cópias viram ruído.",
+      expTag:"Introdução · simulação", expT:"As moradas da cliente 5", exp:expMoradas,
+      buildTag:"Exercício", buildT:"O esquecimento completo",
+      tasks:[
+        "Escrevam <code>privacidade/moradas.md</code> no modelo abaixo: todo lugar onde a cliente 5 ainda vive, a técnica escolhida e o porquê.",
+        "Escrevam o comando <code>esquecer</code>, que recebe o id do cliente e trata todas as moradas: cadastro, eventos de navegação, o telefone na observação do pedido 106 os eventos dela nos dois tópicos do log e o que os leitores guardaram por cliente, na origem e nas camadas de destino.",
+        "O pedido 106 fica sem pessoa: <code>cliente_ps</code> vazio e observação limpa. O valor continua na receita.",
+        "Registrem a evidência em uma lista de eliminação: a chave, a data e as moradas tratadas, sem nenhum dado pessoal.",
+        "EXTRA:Implementem o crypto-shredding. Cifrem os campos pessoais de cada cliente com uma chave própria na camada bronze e façam o <code>esquecer</code> apagar a chave."
+      ],
+      blocos:[{t:"Modelo do inventário de moradas", id:"txMoradas", aberto:true}],
+      checksT:"Verifique",
+      checks:[
+        {esp:"Busquem “Elisa”, 555.555.555-55, (13) 90000-0005 e 203.0.113.55 na origem, no log, na bronze e na silver: nenhuma ocorrência."},
+        {esp:"Depois do esquecimento: <b>6 eventos</b> de navegação, 11 pedidos e receita paga de <b>R$ 844,90</b>. A visão de consumo não muda."},
+        {esp:"A lista de eliminação tem 1 registro e nenhum nome, CPF, e-mail ou telefone."},
+        {esp:"Rodar <code>esquecer 5</code> de novo não falha nem muda nada."}
+      ],
+      entrega:"<code>privacidade/moradas.md</code>, o comando <code>esquecer</code>, a lista de eliminação e os resultados das buscas em <code>evidencias/missao8.txt</code>."
+    },
+    {
+      curto:"Resiliência", bloco:"Aula 9 · Resiliência de Dados", t:"Aconteça o que acontecer, o dado volta", tempo:"45 min",
+      pills:["RPO e RTO","3-2-1-1-0","Ponto limpo"],
+      n:["copia"], e:["e_copia"],
+      lead:"A última promessa: falha, ataque ou dedo nervoso, o dado volta. O grupo decide quanto aceita perder, onde vivem as cópias, e ensaia a restauração com o cronômetro ligado.",
+      beats:[
+        ["RPO e RTO","<b>RPO</b>: quanto dado aceito perder, a distância até a última cópia válida. <b>RTO</b>: quanto tempo aceito ficar fora. Cada sistema tem os seus, e os dois são decisão de negócio documentada."],
+        ["3-2-1-1-0","Três cópias, em dois locais, uma fora do site, uma imutável ou isolada, e zero erros no teste de restauração. Três cópias na mesma conta, com a mesma credencial, valem uma."],
+        ["Restaurar a plataforma","A ordem importa: chaves, dados, catálogo, pipelines, validação. O pipeline idempotente reprocessa a janela perdida como rotina. E o eliminado não volta: a lista de eliminação é reaplicada depois de cada restauração."]
+      ],
+      realT:"Fixe isto",
+      real:"Backup não testado é hipótese. Restaurar em ambiente limpo, validar a integridade e medir o tempo é a única prova.",
+      expTag:"Introdução · simulação", expT:"Sexta, 18h: o ataque", exp:expAtaque,
+      buildTag:"Exercício", buildT:"O plano de resiliência e o ensaio",
+      tasks:[
+        "Escrevam <code>resiliencia/plano.md</code> no modelo abaixo: RPO e RTO da origem, do log, da bronze, da silver e da chave, com os números defendidos.",
+        "Desenhem o esquema 3-2-1-1-0 do grupo: onde vive cada cópia, qual é imutável e qual fica isolada, com credencial independente.",
+        "Façam a cópia de segurança da camada bronze no estado do dia 1, guardem o offset do log e, em outro lugar, a cópia da chave.",
+        "Escrevam o comando <code>reconstruir</code>: ele apaga a camada silver e a visão de consumo e as recria do zero a partir da camada bronze.",
+        "Ensaiem o desastre: apaguem a camada bronze, restaurem a cópia, reapliquem o log e a lista de eliminação, carreguem o lote do dia 3 e reconstruam. Cronometrem.",
+        "EXTRA:Reconstruam uma vez com outra chave e comparem os pseudônimos com os da evidência da Missão 6."
+      ],
+      blocos:[{t:"Modelo do plano de resiliência", id:"txPlano", aberto:true}],
+      checksT:"Verifique",
+      checks:[
+        {esp:"A cópia do dia 1 contém a cliente 5. Depois de restaurar, reaplicar o log e a lista de eliminação, ela não reaparece em nenhuma camada."},
+        {esp:"Depois do ensaio, os números são os da Missão 8: 6 clientes, 11 pedidos, 6 eventos, <b>R$ 844,90</b> e a mesma visão de consumo."},
+        {esp:"Se fizerem o extra: com outra chave, nenhum pseudônimo bate com os antigos. Por isso a chave entra no plano: dado restaurado sem chave restaurada é lixo cifrado."},
+        {esp:"O tempo medido no ensaio é o RTO real. Comparem com o prometido no plano e registrem a diferença."}
+      ],
+      entrega:"<code>resiliencia/plano.md</code>, o comando <code>reconstruir</code>, o tempo do ensaio e os números em <code>evidencias/missao9.txt</code>."
+    },
+    {
+      curto:"Entrega", bloco:"Síntese da disciplina", t:"Desenhe e entregue", tempo:"40 min",
+      pills:["As dez peças"],
+      n:[], e:[], final:true,
+      lead:"A plataforma está no ar, governada, protegida e restaurável. Falta mostrar que o grupo sabe explicar por onde o dado passa e o que o protege em cada trecho.",
+      beats:[
+        ["O desenho, em duas visões","A de <b>estrutura</b> mostra origem, cargas, camadas, quarentena, consumo, chave e cópias. A de <b>fluxo</b> conta a vida de um dado pessoal: do cadastro da cliente à eliminação, passando por cada morada."],
+        ["O que o desenho do grupo tem e este não","As decisões de vocês: linguagem, bancos, trilha de captura, dono e classe de cada conjunto, onde o CPF é real, onde vivem as cópias e qual delas sobrevive a um ataque."],
+        ["As peças da entrega","Cada semana fechou uma entrega, e cada missão deixou uma peça pronta. O README aponta onde ela está no repositório e qual número a comprova. Peça sem evidência não conta."]
+      ],
+      realT:"Em uma frase",
+      real:"O dado nasce no código de vocês. A qualidade, a privacidade e a resiliência começam no aplicativo, e não em quem recebe o dado depois.",
+      expTag:"Preencha", expT:"As peças da entrega, para o README", exp:expMatriz,
+      buildTag:"Entregue", buildT:"O pacote final",
+      tasks:[
+        "Fechem a visão de estrutura que cresceu a cada entrega: arquivo-fonte da ferramenta e imagem (PNG, SVG ou PDF) em <code>arquitetura/</code>.",
+        "Acrescentem a visão de fluxo: a vida de um dado pessoal, do cadastro à eliminação.",
+        "No desenho, lote e captura de mudanças têm traços diferentes, e estão marcados a classe de cada camada, onde fica a chave, quem acessa o quê e onde vivem as cópias.",
+        "README com os comandos para rodar o pipeline do zero e a seção das peças da entrega.",
+        "Pastas <code>governanca/</code>, <code>seguranca/</code>, <code>privacidade/</code> e <code>resiliencia/</code> com os documentos das Missões 5 a 9.",
+        "Pasta <code>evidencias/</code> com os números das Missões 1 a 9.",
+        "Tag <code>entrega-5</code> no repositório, com o link enviado no canal combinado com o professor."
+      ],
+      grade:[
+        ["Ingestão: carga incremental, log de mudanças e fluxo com vários leitores","20%"],
+        ["Contrato, validação e quarentena","10%"],
+        ["Governança: acordo, catálogo gerado e regra como código","15%"],
+        ["Segurança: matriz, trajeto do CPF e camada silver","15%"],
+        ["Privacidade: visão de consumo e esquecimento com evidência","15%"],
+        ["Resiliência: plano e ensaio com os mesmos números","10%"],
+        ["Desenho da arquitetura e README","15%"]
+      ],
+      entregaT:"Na apresentação",
+      entrega:"O grupo roda o pipeline, esquece um cliente e reconstrói a camada silver na frente da turma, e mostra no desenho por onde aquele dado passou."
+    }
+  ];
+
+  /* ================= montagem do SVG ================= */
+  var SVGNS = "http://www.w3.org/2000/svg";
+  var nodeEls = {}, edgeEls = {};
+  function el(name, attrs){
+    var e = document.createElementNS(SVGNS, name);
+    for(var a in attrs){ e.setAttribute(a, attrs[a]); }
+    return e;
+  }
+  EDGES.forEach(function(ed){
+    var g = el("g", {"class":"edge " + ed.k, id:ed.id});
+    var attrs = {d:ed.d};
+    if(ed.k === "sync" || ed.k === "async" || ed.k === "desvio"){ attrs["marker-end"] = "url(#mk-" + ed.k + ")"; }
+    g.appendChild(el("path", attrs));
+    if(ed.lb){
+      var t = el("text", {x:ed.lb.x, y:ed.lb.y, "text-anchor":ed.lb.a});
+      t.textContent = ed.lb.t; g.appendChild(t);
+    }
+    $("edges").appendChild(g);
+    edgeEls[ed.id] = g;
+  });
+  NODES.forEach(function(nd){
+    var g = el("g", {"class":"node " + (nd.k || ""), id:"n_" + nd.id});
+    g.appendChild(el("rect", {x:nd.x, y:nd.y, width:nd.w, height:nd.h, rx: nd.k === "dado" ? 21 : 4}));
+    var cx = nd.x + nd.w / 2, linhas = nd.l.length;
+    var blocoH = linhas * 16 + (nd.s ? 11 : 0);
+    var topo = nd.y + (nd.h - blocoH) / 2;
+    nd.l.forEach(function(linha, i){
+      var t = el("text", {x:cx, y:topo + 13 + i * 16, "text-anchor":"middle", "class":"lbl"});
+      t.textContent = linha; g.appendChild(t);
+    });
+    if(nd.s){
+      var s = el("text", {x:cx, y:topo + linhas * 16 + 9, "text-anchor":"middle", "class":"sub"});
+      s.textContent = nd.s; g.appendChild(s);
+    }
+    $("nodes").appendChild(g);
+    nodeEls[nd.id] = g;
+  });
+  var nodeMissao = {};
+  MISSOES.forEach(function(m, i){ m.n.forEach(function(id){ nodeMissao[id] = i; }); });
+  Object.keys(nodeEls).forEach(function(id){
+    nodeEls[id].addEventListener("click", function(){
+      if(nodeMissao[id] !== undefined && nodeEls[id].classList.contains("on")){ ir(nodeMissao[id]); }
+    });
+  });
+
+  /* ================= semanas, trilha e entregas ================= */
+  function semanaDe(i){
+    for(var k = 0; k < SEMANAS.length; k++){ if(SEMANAS[k].m.indexOf(i) >= 0) return k; }
+    return 0;
+  }
+  function ehExtra(t){ return t.indexOf("EXTRA:") === 0; }
+  function total(i){ return MISSOES[i].tasks.filter(function(t){ return !ehExtra(t); }).length; }
+  function feitas(i){
+    var n = 0;
+    MISSOES[i].tasks.forEach(function(t, j){ if(!ehExtra(t) && salvo.checks[i + "-" + j]) n++; });
+    return n;
+  }
+  function pecasDa(k){
+    var out = [];
+    SEMANAS[k].m.forEach(function(i){ if(i >= 1) out.push(PECAS[i - 1].n); });
+    return out;
+  }
+  var semanas = $("semanas"), trilha = $("trilha");
+  SEMANAS.forEach(function(s, k){
+    var b = document.createElement("button"); b.type = "button";
+    b.innerHTML = "<span class=\"s-n\">Semana " + (k + 1) + "</span><span class=\"s-t\">" + s.t + "</span><span class=\"s-c\"></span>";
+    b.addEventListener("click", function(){ ir(s.m[0]); });
+    semanas.appendChild(b);
+    var li = document.createElement("li"); li.id = "pc_" + k;
+    $("princLista").appendChild(li);
+  });
+  MISSOES.forEach(function(m, i){
+    var b = document.createElement("button");
+    b.type = "button";
+    b.innerHTML = "<span class=\"n\">" + i + "</span><span>" + m.curto + "</span><span class=\"ok\"></span>";
+    b.addEventListener("click", function(){ ir(i); });
+    trilha.appendChild(b);
+  });
+  function atualizaTrilha(){
+    var sa = semanaDe(atual), fechadas = 0;
+    Array.prototype.forEach.call(trilha.children, function(b, i){
+      b.hidden = semanaDe(i) !== sa;
+      b.className = i === atual ? "now" : "";
+      if(i === atual){ b.setAttribute("aria-current", "step"); } else { b.removeAttribute("aria-current"); }
+      b.querySelector(".ok").textContent = feitas(i) + "/" + total(i);
+    });
+    SEMANAS.forEach(function(s, k){
+      var f = 0, t = 0;
+      s.m.forEach(function(i){ f += feitas(i); t += total(i); });
+      var fechada = f === t;
+      if(fechada) fechadas++;
+      var b = semanas.children[k];
+      b.className = (k === sa ? "now" : "") + (fechada ? " fechada" : "");
+      if(k === sa){ b.setAttribute("aria-current", "true"); } else { b.removeAttribute("aria-current"); }
+      b.querySelector(".s-c").textContent = f + " de " + t + " tarefas · " + s.h;
+      var li = $("pc_" + k);
+      li.className = k === sa ? "agora" : (fechada ? "feito" : "");
+      li.textContent = (fechada ? "✓ " : "") + "Entrega " + (k + 1) + " · " + s.t;
+    });
+    $("princCont").textContent = fechadas + " de 5 fechadas";
+    var ps = pecasDa(sa).map(function(p){ return "<b>" + p.charAt(0).toLowerCase() + p.slice(1) + "</b>"; });
+    var ultima = sa === SEMANAS.length - 1;
+    var lista = ultima ? ps.join(", ") : ps.join(", ") + " e o desenho atualizado";
+    $("entregaSem").innerHTML = "<span class=\"rot\">Entrega " + (sa + 1) + " de 5 · " + SEMANAS[sa].h + " de exercício</span>" +
+      "<span>Na aula, a introdução: o conceito e a simulação de cada missão. Depois, o exercício, na plataforma livre do grupo. " + (ultima ? "Para fechar" : "Até a aula seguinte") + ": tag <code>entrega-" + (sa + 1) + "</code> no repositório, com " + lista + "." +
+      (ultima ? " É a entrega final, apresentada em sala." : "") + "</span>";
+  }
+
+  /* ================= navegação ================= */
+  var atual = Math.max(0, Math.min(MISSOES.length - 1, salvo.missao));
+  var h0 = /^#m(\d{1,2})$/.exec(location.hash || "");
+  if(h0){ atual = parseInt(h0[1], 10); }
+
+  function ir(i, subir){
+    atual = Math.max(0, Math.min(MISSOES.length - 1, i));
+    salvo.missao = atual; salvar();
+    desenhar();
+    if(subir){ try{ window.scrollTo({top:0, behavior:"smooth"}); }catch(e){ window.scrollTo(0, 0); } }
+  }
+
+  function desenhar(){
+    var m = MISSOES[atual];
+    var nos = {}, arestas = {};
+    for(var i = 0; i <= atual; i++){
+      MISSOES[i].n.forEach(function(id){ nos[id] = i; });
+      MISSOES[i].e.forEach(function(id){ arestas[id] = true; });
+    }
+    Object.keys(nodeEls).forEach(function(id){
+      nodeEls[id].classList.toggle("on", nos[id] !== undefined);
+      nodeEls[id].classList.toggle("new", nos[id] === atual);
+    });
+    Object.keys(edgeEls).forEach(function(id){ edgeEls[id].classList.toggle("on", !!arestas[id]); });
+
+    $("pNum").textContent = "Missão " + atual;
+    $("pBloco").textContent = "Semana " + (semanaDe(atual) + 1) + " · " + m.bloco;
+    $("pTitle").textContent = m.t;
+    $("pPills").innerHTML = m.pills.map(function(p){ return "<span class=\"pill\">" + p + "</span>"; }).join("") +
+      "<span class=\"pill tempo\">≈ " + m.tempo + "</span>";
+    $("pLead").textContent = m.lead;
+    $("pBeats").innerHTML = m.beats.map(function(b){ return "<dt>" + b[0] + "</dt><dd>" + b[1] + "</dd>"; }).join("");
+    $("pRealT").textContent = m.realT;
+    $("pRealX").innerHTML = m.real;
+
+    $("expTag").textContent = m.expTag; $("expT").textContent = m.expT;
+    var eb = $("expBody"); eb.innerHTML = "";
+    var palco = document.createElement("div"); palco.className = "exp-in"; eb.appendChild(palco); m.exp(palco);
+    $("buildTag").textContent = m.buildTag; $("buildT").textContent = m.buildT;
+    construir($("buildBody"), m, atual);
+
+    var ultimo = atual === MISSOES.length - 1;
+    ["btnPrev","btnPrev2"].forEach(function(id){ $(id).disabled = atual === 0; });
+    ["btnNext","btnNext2"].forEach(function(id){
+      $(id).disabled = ultimo;
+      $(id).textContent = atual === MISSOES.length - 2 ? "Ir para a entrega →" : "Próxima missão →";
+    });
+    atualizaTrilha();
+  }
+
+  function construir(raiz, m, idx){
+    raiz.innerHTML = "";
+    var ul = document.createElement("ul"); ul.className = "tasks";
+    m.tasks.forEach(function(t, j){
+      var chave = idx + "-" + j;
+      var li = document.createElement("li");
+      var lab = document.createElement("label");
+      var cb = document.createElement("input"); cb.type = "checkbox"; cb.id = "t-" + chave; cb.checked = !!salvo.checks[chave];
+      cb.addEventListener("change", function(){
+        if(cb.checked){ salvo.checks[chave] = true; } else { delete salvo.checks[chave]; }
+        salvar(); atualizaTrilha();
+      });
+      var sp = document.createElement("span"); sp.innerHTML = ehExtra(t) ? "<span class=\"extra-pill\">extra</span>" + t.slice(6) : t;
+      lab.appendChild(cb); lab.appendChild(sp); li.appendChild(lab); ul.appendChild(li);
+    });
+    raiz.appendChild(ul);
+
+    (m.blocos || []).forEach(function(b){
+      var d = document.createElement("details"); d.className = "mais"; if(b.aberto){ d.open = true; }
+      var s = document.createElement("summary"); s.textContent = b.t; d.appendChild(s);
+      d.appendChild(blocoCodigo(texto(b.id), b.t));
+      raiz.appendChild(d);
+    });
+
+    if(m.checks){
+      var w = document.createElement("div");
+      w.innerHTML = "<p class=\"sub-t\">" + m.checksT + "</p>";
+      var ol = document.createElement("ol"); ol.className = "checks";
+      m.checks.forEach(function(c){
+        var li = document.createElement("li");
+        var corpo = document.createElement("span"); corpo.innerHTML = c.esp;
+        li.appendChild(corpo); ol.appendChild(li);
+      });
+      w.appendChild(ol); raiz.appendChild(w);
+    }
+
+    if(m.grade){
+      var g = document.createElement("div");
+      g.innerHTML = "<p class=\"sub-t\">Critérios de avaliação</p><table class=\"grade\"><thead><tr><th>O que será observado</th><th>Peso</th></tr></thead><tbody>" +
+        m.grade.map(function(r){ return "<tr><td>" + r[0] + "</td><td>" + r[1] + "</td></tr>"; }).join("") + "</tbody></table>";
+      raiz.appendChild(g);
+    }
+
+    var en = document.createElement("div"); en.className = "entrega";
+    var rot = m.entregaT || ("Peça da entrega · " + PECAS[idx - 1].n);
+    en.innerHTML = "<b class=\"t\">" + rot + "</b>" + m.entrega;
+    raiz.appendChild(en);
+  }
+
+  /* ================= Missão 0: regras ================= */
+  function expRegras(raiz){
+    raiz.innerHTML =
+      "<div class=\"regras\">" +
+        "<div class=\"regra\"><h4>Um projeto só, cinco entregas</h4><p>O mesmo repositório do início ao fim. Cada entrega é uma tag, de <code>entrega-1</code> a <code>entrega-5</code>, e a semana seguinte começa de onde a anterior parou.</p></div>" +
+        "<div class=\"regra\"><h4>Linguagem e banco livres</h4><p>Qualquer linguagem, qualquer banco e qualquer formato de arquivo. O laboratório cobra o comportamento da plataforma, e não a ferramenta.</p></div>" +
+        "<div class=\"regra\"><h4>Plataforma livre</h4><p>Todo exercício é feito com software livre ou em serviço gratuito. Nenhuma conta paga e nenhum serviço que peça cartão.</p></div>" +
+        "<div class=\"regra\"><h4>Os números mandam</h4><p>Os dados de partida são iguais para toda a turma, e cada missão tem resultados esperados. Tecnologias diferentes precisam chegar aos mesmos números.</p></div>" +
+      "</div>" +
+      "<div><p class=\"sub-t\">As cinco entregas</p><ol class=\"entregas\">" +
+        SEMANAS.map(function(s, k){
+          var pecas = []; s.m.forEach(function(i){ if(i >= 1) pecas.push(PECAS[i - 1].n); });
+          return "<li><b>Semana " + (k + 1) + "</b><span><strong>" + s.t + "</strong> · " + pecas.join(" · ") + "</span></li>";
+        }).join("") +
+      "</ol></div>" +
+      "<div><p class=\"sub-t\">Onde fazer o exercício, sem pagar nada</p><ul class=\"caixa\">" +
+        "<li><b>No navegador, com o GitHub Codespaces (recomendado).</b> Um ambiente Linux completo, ligado ao repositório, com Docker para subir PostgreSQL ou Kafka. O grupo retoma a cada semana exatamente de onde parou. A conta pessoal gratuita inclui 120 horas-núcleo por mês, cerca de 60 horas em máquina de 2 núcleos. Parem o ambiente ao terminar.</li>" +
+        "<li><b>No computador do grupo.</b> Bastam a linguagem escolhida, o Git e um banco embutido, como o SQLite. A Trilha A de todas as missões roda assim, sem instalar servidor nenhum.</li>" +
+        "<li><b>Em cadernos, com o Google Colab.</b> Para grupos em Python: gratuito e no navegador. A máquina é apagada ao fim da sessão, então código e dados precisam ser salvos no repositório a cada uso.</li>" +
+        "<li><b>Para conhecer um broker, com o Killercoda.</b> Terminal Linux gratuito no navegador, em sessões de uma hora. Serve para experimentar o Kafka antes de decidir pela Trilha B, e não para guardar o projeto.</li>" +
+      "</ul><p class=\"nota-pe\">Limites dos serviços conferidos em outubro de 2026. Confiram antes de começar.</p></div>" +
+      "<div><p class=\"sub-t\">Caixa de ferramentas livres</p><ul class=\"caixa\">" +
+        "<li><b>Origem:</b> SQLite, PostgreSQL, MariaDB ou outro banco livre.</li>" +
+        "<li><b>Camadas de destino:</b> arquivos CSV ou Parquet, DuckDB, PostgreSQL.</li>" +
+        "<li><b>Log e fluxo, se o grupo quiser ferramenta:</b> replicação lógica do banco, Debezium, e um broker como Kafka, NATS ou RabbitMQ.</li>" +
+        "<li><b>Contratos e acordo:</b> arquivos YAML lidos pelo código do grupo.</li>" +
+        "<li><b>Desenho:</b> diagrams.net (draw.io), Excalidraw, Mermaid ou PlantUML.</li>" +
+        "<li><b>Versionamento:</b> Git, com o repositório em um serviço gratuito.</li>" +
+      "</ul></div>";
+  }
+
+  /* ================= Missão 1: carga ================= */
+  function expCarga(raiz){
+    var st;
+    function zera(modo){
+      st = {modo:modo, clock:6, src:[], dest:[], wm:0, lidas:null, total:0, exec:0, prox:7, vez:0,
+        msg:"A origem tem 6 linhas e o destino está vazio. Rode a carga, e depois rode de novo."};
+      for(var i = 1; i <= 6; i++){ st.src.push({id:i, v:1, t:i}); }
+    }
+    zera("append");
+    raiz.innerHTML =
+      "<p>A mesma carga, de três jeitos. Rode mais de uma vez, mude a origem e compare o que cada jeito lê e o que deixa no destino.</p>" +
+      "<div class=\"seg\" role=\"group\" aria-label=\"Tipo de carga\">" +
+        "<button type=\"button\" data-modo=\"append\">Completa, acrescentando</button>" +
+        "<button type=\"button\" data-modo=\"troca\">Completa, substituindo</button>" +
+        "<button type=\"button\" data-modo=\"incr\">Incremental com mesclagem</button></div>" +
+      "<div class=\"btn-row\">" +
+        "<button type=\"button\" class=\"primario\" data-a=\"rodar\">Rodar a carga</button>" +
+        "<button type=\"button\" class=\"secundario\" data-a=\"alterar\">Alterar uma linha na origem</button>" +
+        "<button type=\"button\" class=\"secundario\" data-a=\"inserir\">Inserir uma linha na origem</button>" +
+        "<button type=\"button\" class=\"secundario\" data-a=\"zera\">Recomeçar</button></div>" +
+      "<div class=\"tiles\" id=\"c1tiles\"></div>" +
+      "<pre class=\"code\" id=\"c1dest\" aria-label=\"Chaves no destino\"></pre>" +
+      "<div class=\"veredito\" id=\"c1ver\" aria-live=\"polite\"></div>";
+    function certo(){
+      if(st.dest.length !== st.src.length) return false;
+      return st.src.every(function(s){ return st.dest.filter(function(d){ return d.id === s.id && d.v === s.v; }).length === 1; });
+    }
+    function pinta(){
+      Array.prototype.forEach.call(raiz.querySelectorAll(".seg button"), function(b){
+        b.setAttribute("aria-pressed", String(b.getAttribute("data-modo") === st.modo));
+      });
+      var dup = st.dest.length > st.src.length;
+      raiz.querySelector("#c1tiles").innerHTML =
+        "<div class=\"tile\"><div class=\"big\">" + st.src.length + "</div><div class=\"cap\">linhas na origem</div></div>" +
+        "<div class=\"tile\"><div class=\"big" + (dup ? " bad" : "") + "\">" + st.dest.length + "</div><div class=\"cap\">linhas no destino</div></div>" +
+        "<div class=\"tile\"><div class=\"big\">" + (st.lidas === null ? "—" : st.lidas) + "</div><div class=\"cap\">linhas lidas na última execução<br>" + st.total + " no total, em " + st.exec + (st.exec === 1 ? " execução" : " execuções") + "</div></div>";
+      raiz.querySelector("#c1dest").textContent = "chaves no destino: " + (st.dest.length ? st.dest.map(function(d){ return d.id + (d.v > 1 ? "'" : ""); }).join(" ") : "(vazio)") +
+        "\n(o apóstrofo marca a versão alterada da linha)";
+      raiz.querySelector("#c1ver").innerHTML = st.msg;
+    }
+    raiz.addEventListener("click", function(ev){
+      var b = ev.target.closest("button"); if(!b) return;
+      var modo = b.getAttribute("data-modo"), a = b.getAttribute("data-a");
+      if(modo){ zera(modo); pinta(); return; }
+      if(a === "zera"){ zera(st.modo); pinta(); return; }
+      if(a === "alterar"){
+        var alvo = st.src[st.vez % st.src.length]; st.vez++;
+        alvo.v++; alvo.t = ++st.clock;
+        st.msg = "A linha " + alvo.id + " foi alterada na origem. O destino está desatualizado: rode a carga."; pinta(); return;
+      }
+      if(a === "inserir"){
+        st.src.push({id:st.prox, v:1, t:++st.clock});
+        st.msg = "A linha " + st.prox + " foi inserida na origem. Rode a carga."; st.prox++; pinta(); return;
+      }
+      if(a === "rodar"){
+        st.exec++;
+        if(st.modo === "append"){
+          st.lidas = st.src.length;
+          st.dest = st.dest.concat(st.src.map(function(s){ return {id:s.id, v:s.v}; }));
+          st.msg = st.dest.length > st.src.length
+            ? "<b>Duplicou.</b> O destino tem " + st.dest.length + " linhas para " + st.src.length + " na origem. Qualquer soma feita aqui sai inflada, e a carga terminou sem erro."
+            : "Primeira execução: as " + st.lidas + " linhas chegaram. Rode de novo.";
+        } else if(st.modo === "troca"){
+          st.lidas = st.src.length;
+          st.dest = st.src.map(function(s){ return {id:s.id, v:s.v}; });
+          st.msg = st.exec === 1
+            ? "Primeira execução: as " + st.lidas + " linhas chegaram. Rode de novo."
+            : "<b>Correto, e caro.</b> Leu as " + st.lidas + " linhas de novo, tenha mudado uma ou nenhuma. O custo acompanha o tamanho da tabela.";
+        } else {
+          var mud = st.src.filter(function(s){ return s.t > st.wm; });
+          st.lidas = mud.length;
+          mud.forEach(function(s){
+            var d = st.dest.filter(function(x){ return x.id === s.id; })[0];
+            if(d){ d.v = s.v; } else { st.dest.push({id:s.id, v:s.v}); }
+          });
+          st.src.forEach(function(s){ if(s.t > st.wm) st.wm = s.t; });
+          st.msg = st.lidas === 0
+            ? "<b>Leu 0 linhas</b> e o destino não mudou. Rodar de novo é seguro: isso é idempotência."
+            : (st.exec === 1 ? "Primeira execução: leu as " + st.lidas + " linhas e guardou a marca-d'água. Rode de novo."
+              : "<b>Leu só " + st.lidas + (st.lidas === 1 ? " linha" : " linhas") + ".</b> O que mudou foi mesclado pela chave, e o destino está igual à origem.");
+        }
+        st.total += st.lidas;
+        if(st.modo !== "append" && !certo()){ st.msg += " Atenção: o destino não bate com a origem."; }
+        pinta();
+      }
+    });
+    pinta();
+  }
+
+  /* ================= Missão 2: mudanças ================= */
+  function expMudancas(raiz){
+    var st;
+    function zera(modo){
+      st = {modo:modo, src:{1:"ana@", 2:"bruno@", 3:"carla@"}, dest:{1:"ana@", 2:"bruno@", 3:"carla@"},
+        log:[], pos:0, sujo:{}, nCarla:0, diego:false, bruno:false,
+        msg:"Origem e destino começam iguais. Faça as três mudanças e só depois sincronize."};
+    }
+    var NOME = {1:"Ana", 2:"Bruno", 3:"Carla", 4:"Diego"};
+    zera("marca");
+    raiz.innerHTML =
+      "<p>Uma tabela de clientes e a cópia dela no destino. Mude a origem e sincronize pelos dois métodos.</p>" +
+      "<div class=\"seg\" role=\"group\" aria-label=\"Método de sincronização\">" +
+        "<button type=\"button\" data-modo=\"marca\">Consulta por marca-d'água</button>" +
+        "<button type=\"button\" data-modo=\"log\">Log de mudanças</button></div>" +
+      "<div class=\"btn-row\">" +
+        "<button type=\"button\" class=\"secundario\" data-a=\"carla\">Alterar o e-mail da Carla</button>" +
+        "<button type=\"button\" class=\"secundario\" data-a=\"diego\">Inserir o Diego</button>" +
+        "<button type=\"button\" class=\"secundario\" data-a=\"bruno\">Excluir o Bruno</button>" +
+        "<button type=\"button\" class=\"primario\" data-a=\"sinc\">Sincronizar</button>" +
+        "<button type=\"button\" class=\"secundario\" data-a=\"zera\">Recomeçar</button></div>" +
+      "<div class=\"insts\" id=\"c2cols\"></div>" +
+      "<div class=\"veredito\" id=\"c2ver\" aria-live=\"polite\"></div>";
+    function linhas(tab, outro, ehDestino){
+      var ids = Object.keys(tab);
+      if(!ids.length) return "<span class=\"vazio\">vazio</span>";
+      return "<ul class=\"mem\">" + ids.map(function(id){
+        var marca = "";
+        if(ehDestino && outro[id] === undefined){ marca = " <span class=\"st bad\">fantasma</span>"; }
+        else if(ehDestino && outro[id] !== tab[id]){ marca = " <span class=\"st bad\">antigo</span>"; }
+        return "<li>" + id + " " + NOME[id] + " · " + tab[id] + marca + "</li>";
+      }).join("") + "</ul>";
+    }
+    function pinta(){
+      Array.prototype.forEach.call(raiz.querySelectorAll(".seg button"), function(b){
+        b.setAttribute("aria-pressed", String(b.getAttribute("data-modo") === st.modo));
+      });
+      raiz.querySelector("[data-a=diego]").disabled = st.diego;
+      raiz.querySelector("[data-a=bruno]").disabled = st.bruno;
+      var meio;
+      if(st.modo === "log"){
+        meio = st.log.length ? "<ul class=\"mem\">" + st.log.map(function(ev, i){
+          return "<li>#" + (i + 1) + " " + ev.op + " cliente " + ev.id + (i < st.pos ? " ✓" : "") + "</li>"; }).join("") + "</ul>"
+          : "<span class=\"vazio\">nenhum evento ainda</span>";
+      } else { meio = "<span class=\"vazio\">a consulta lê a tabela como ela está agora, sem histórico</span>"; }
+      raiz.querySelector("#c2cols").innerHTML =
+        "<div class=\"inst\"><h4>Origem</h4>" + linhas(st.src, st.dest, false) + "</div>" +
+        "<div class=\"inst\"><h4>Log de mudanças<span class=\"st " + (st.modo === "log" ? "ok\">em uso" : "off\">sem uso") + "</span></h4>" + meio + "</div>" +
+        "<div class=\"inst\"><h4>Destino</h4>" + linhas(st.dest, st.src, true) + "</div>";
+      raiz.querySelector("#c2ver").innerHTML = st.msg;
+    }
+    raiz.addEventListener("click", function(ev){
+      var b = ev.target.closest("button"); if(!b || b.disabled) return;
+      var modo = b.getAttribute("data-modo"), a = b.getAttribute("data-a");
+      if(modo){ zera(modo); pinta(); return; }
+      if(a === "zera"){ zera(st.modo); pinta(); return; }
+      if(a === "carla"){ st.nCarla++; st.src[3] = "carla.n" + st.nCarla + "@"; st.sujo[3] = (st.sujo[3] || 0) + 1; st.log.push({op:"alteração", id:3, v:st.src[3]}); st.msg = "E-mail da Carla alterado na origem."; }
+      else if(a === "diego"){ st.diego = true; st.src[4] = "diego@"; st.sujo[4] = 1; st.log.push({op:"inserção", id:4, v:"diego@"}); st.msg = "Diego inserido na origem."; }
+      else if(a === "bruno"){ st.bruno = true; delete st.src[2]; delete st.sujo[2]; st.log.push({op:"exclusão", id:2}); st.msg = "Bruno excluído da origem. A linha dele não existe mais."; }
+      else if(a === "sinc"){
+        if(st.modo === "marca"){
+          var ids = Object.keys(st.sujo), perdidos = 0;
+          ids.forEach(function(id){ if(st.src[id] !== undefined){ st.dest[id] = st.src[id]; if(st.sujo[id] > 1) perdidos += st.sujo[id] - 1; } });
+          st.sujo = {};
+          var fantasma = Object.keys(st.dest).some(function(id){ return st.src[id] === undefined; });
+          st.msg = "A consulta trouxe " + ids.length + (ids.length === 1 ? " linha alterada" : " linhas alteradas") + "." +
+            (fantasma ? " <b>O Bruno continua no destino:</b> ele foi excluído na origem, e uma consulta só devolve linhas que existem." : "") +
+            (perdidos ? " " + perdidos + (perdidos === 1 ? " alteração intermediária da Carla não foi vista" : " alterações intermediárias da Carla não foram vistas") + ": só o último estado chegou." : "") +
+            (!fantasma && !perdidos && ids.length ? " Para inserção e alteração, a marca-d'água dá conta. Agora exclua o Bruno." : "");
+        } else {
+          var n = st.log.length - st.pos;
+          for(var i = st.pos; i < st.log.length; i++){
+            var e = st.log[i];
+            if(e.op === "exclusão"){ delete st.dest[e.id]; } else { st.dest[e.id] = e.v; }
+          }
+          st.pos = st.log.length; st.sujo = {};
+          st.msg = n ? "<b>" + n + (n === 1 ? " evento aplicado" : " eventos aplicados") + " em ordem</b>, exclusão inclusive. Posição salva: " + st.pos + ". Sincronizar de novo não aplica nada."
+            : "Nenhum evento depois da posição " + st.pos + ". Nada foi lido da tabela de origem.";
+        }
+      }
+      pinta();
+    });
+    pinta();
+  }
+
+  /* ================= Missão 4: contrato ================= */
+  function expContrato(raiz){
+    var LOTE = [
+      {id:110, cli:1,    v:3300, s:"pago",    d:2026},
+      {id:111, cli:2,    v:-500, s:"pago",    d:2026},
+      {id:112, cli:null, v:4200, s:"pago",    d:2026},
+      {id:113, cli:4,    v:2100, s:"enviado", d:2026},
+      {id:110, cli:1,    v:3300, s:"pago",    d:2026},
+      {id:114, cli:2,    v:1800, s:"pago",    d:2031},
+      {id:115, cli:6,    v:6100, s:"pago",    d:2026}
+    ];
+    var REG = [
+      {k:"obrig", t:"<code>cliente_id</code> obrigatório"},
+      {k:"min",   t:"<code>valor_centavos</code> ≥ 0"},
+      {k:"dom",   t:"<code>status</code> dentro do domínio"},
+      {k:"fut",   t:"<code>criado_em</code> não está no futuro"},
+      {k:"unico", t:"<code>id</code> único"}
+    ];
+    var on = {};
+    raiz.innerHTML =
+      "<p>Sete linhas de pedidos chegam por arquivo. Sem regra nenhuma, todas entram. Ligue as regras do contrato e veja o número mudar.</p>" +
+      "<div class=\"chips\" id=\"c3chips\"></div>" +
+      "<ul class=\"linhas\" id=\"c3rows\"></ul>" +
+      "<div class=\"tiles\" id=\"c3tiles\"></div>" +
+      "<div class=\"veredito\" id=\"c3ver\" aria-live=\"polite\"></div>";
+    var chips = raiz.querySelector("#c3chips");
+    REG.forEach(function(r){
+      var b = document.createElement("button"); b.type = "button"; b.className = "chip"; b.innerHTML = r.t;
+      b.setAttribute("aria-pressed", "false");
+      b.addEventListener("click", function(){ on[r.k] = !on[r.k]; b.setAttribute("aria-pressed", String(!!on[r.k])); pinta(); });
+      chips.appendChild(b);
+    });
+    function pinta(){
+      var vistos = {}, aceitas = 0, receita = 0;
+      raiz.querySelector("#c3rows").innerHTML = LOTE.map(function(l){
+        var motivo = "";
+        if(on.obrig && l.cli === null) motivo = "cliente ausente";
+        else if(on.min && l.v < 0) motivo = "valor negativo";
+        else if(on.dom && ["pendente","pago","cancelado"].indexOf(l.s) < 0) motivo = "status fora do domínio";
+        else if(on.fut && l.d > 2026) motivo = "data no futuro";
+        else if(on.unico && vistos[l.id]) motivo = "chave repetida";
+        if(!motivo){ vistos[l.id] = true; aceitas++; if(l.s === "pago") receita += l.v; }
+        return "<li><span class=\"quem\"><b>Pedido " + l.id + "</b><small>cliente " + (l.cli === null ? "(vazio)" : l.cli) + " · " + reais(l.v) + " · " + l.s + (l.d > 2026 ? " · criado em 2031" : "") + "</small></span>" +
+          "<span class=\"res\">" + (motivo ? "<small>" + motivo + "</small><span class=\"st bad\">quarentena</span>" : "<span class=\"st ok\">aceita</span>") + "</span></li>";
+      }).join("");
+      var certo = receita === 9400 && aceitas === 2;
+      raiz.querySelector("#c3tiles").innerHTML =
+        "<div class=\"tile\"><div class=\"big\">" + aceitas + "</div><div class=\"cap\">linhas aceitas<br>na camada silver</div></div>" +
+        "<div class=\"tile\"><div class=\"big\">" + (LOTE.length - aceitas) + "</div><div class=\"cap\">linhas em quarentena,<br>com o motivo</div></div>" +
+        "<div class=\"tile\"><div class=\"big" + (certo ? "" : " bad") + "\">" + reais(receita) + "</div><div class=\"cap\">receita paga<br>deste lote</div></div>";
+      raiz.querySelector("#c3ver").innerHTML = certo
+        ? "<b>O número fecha.</b> Duas linhas seguem para a camada silver e cinco esperam em quarentena, cada uma com o seu motivo."
+        : "O pipeline terminou sem erro e a receita do lote aparece como <b>" + reais(receita) + "</b>. O valor correto é " + reais(9400) + ". Continue ligando as regras.";
+    }
+    pinta();
+  }
+
+  /* ================= Missão 7: reidentificação ================= */
+  function expProtecao(raiz){
+    var CLI = [
+      {id:1, nasc:"1990-03-12", faixa:"35–44", cid:"Santos",   sha:"6b86b273ff", mac:"87f7e6ea0a"},
+      {id:2, nasc:"1985-07-30", faixa:"35–44", cid:"Campinas", sha:"d4735e3a26", mac:"50c1c4030f"},
+      {id:3, nasc:"1998-11-02", faixa:"25–34", cid:"Santos",   sha:"4e07408562", mac:"6b8aba864a"},
+      {id:4, nasc:"1979-01-21", faixa:"45–54", cid:"Sorocaba", sha:"4b227777d4", mac:"6dd1607e85"},
+      {id:6, nasc:"1993-09-17", faixa:"25–34", cid:"Santos",   sha:"e7f6c01177", mac:"a65b2184f6"},
+      {id:7, nasc:"1996-02-25", faixa:"25–34", cid:"Sorocaba", sha:"7902699be4", mac:"9c9f2db2dc"}
+    ];
+    var st = {ident:"claro", nasc:"data"};
+    raiz.innerHTML =
+      "<p>Esta é a tabela de clientes que o analista vê. O atacante sabe duas coisas: os ids do cadastro vão de 1 a 7, e a Carla nasceu em 02/11/1998 e mora em Santos.</p>" +
+      "<div><p class=\"sub-t\">Identificador do cliente</p><div class=\"seg\" role=\"group\" aria-label=\"Identificador do cliente\">" +
+        "<button type=\"button\" data-i=\"claro\">Id em claro</button>" +
+        "<button type=\"button\" data-i=\"hash\">Hash sem chave</button>" +
+        "<button type=\"button\" data-i=\"hmac\">Hash com chave</button>" +
+        "<button type=\"button\" data-i=\"fora\">Removido</button></div></div>" +
+      "<div><p class=\"sub-t\">Nascimento</p><div class=\"seg\" role=\"group\" aria-label=\"Nascimento\">" +
+        "<button type=\"button\" data-n=\"data\">Data completa</button>" +
+        "<button type=\"button\" data-n=\"ano\">Só o ano</button>" +
+        "<button type=\"button\" data-n=\"faixa\">Faixa etária</button></div></div>" +
+      "<div class=\"tabwrap\"><table class=\"mini\" id=\"c4tab\"></table></div>" +
+      "<div class=\"tiles\" id=\"c4tiles\"></div>" +
+      "<div class=\"veredito\" id=\"c4ver\" aria-live=\"polite\"></div>";
+    function vIdent(c){ return st.ident === "claro" ? String(c.id) : st.ident === "hash" ? c.sha + "…" : st.ident === "hmac" ? c.mac + "…" : "—"; }
+    function vNasc(c){ return st.nasc === "data" ? c.nasc : st.nasc === "ano" ? c.nasc.slice(0, 4) : c.faixa; }
+    function pinta(){
+      Array.prototype.forEach.call(raiz.querySelectorAll("[data-i]"), function(b){ b.setAttribute("aria-pressed", String(b.getAttribute("data-i") === st.ident)); });
+      Array.prototype.forEach.call(raiz.querySelectorAll("[data-n]"), function(b){ b.setAttribute("aria-pressed", String(b.getAttribute("data-n") === st.nasc)); });
+      var carla = CLI[2];
+      var k = CLI.filter(function(c){ return c.cid === carla.cid && vNasc(c) === vNasc(carla); }).length;
+      var viaId = st.ident === "claro" || st.ident === "hash";
+      var achou = viaId || k === 1;
+      var juncao = st.ident !== "fora";
+      raiz.querySelector("#c4tab").innerHTML = "<thead><tr><th>cliente</th><th>nascimento</th><th>cidade</th></tr></thead><tbody>" +
+        CLI.map(function(c){ return "<tr" + (c.id === 3 && achou ? " class=\"alvo\"" : "") + "><td>" + vIdent(c) + "</td><td>" + vNasc(c) + "</td><td>" + c.cid + "</td></tr>"; }).join("") + "</tbody>";
+      raiz.querySelector("#c4tiles").innerHTML =
+        "<div class=\"tile\"><div class=\"big" + (achou ? " bad" : "") + "\">" + (achou ? "sim" : "não") + "</div><div class=\"cap\">a Carla foi<br>reidentificada?</div></div>" +
+        "<div class=\"tile\"><div class=\"big" + (k === 1 ? " bad" : "") + "\">" + k + "</div><div class=\"cap\">" + (k === 1 ? "pessoa" : "pessoas") + " com o perfil dela<br>(cidade + nascimento)</div></div>" +
+        "<div class=\"tile\"><div class=\"big" + (juncao ? "" : " bad") + "\">" + (juncao ? "funciona" : "perdida") + "</div><div class=\"cap\">junção de clientes<br>com pedidos</div></div>";
+      var v;
+      if(st.ident === "claro"){ v = "<b>Reidentificada pelo id.</b> O id em claro é a própria chave do cadastro: quem conhece a origem sabe quem é a linha 3."; }
+      else if(st.ident === "hash"){ v = "<b>Reidentificada pelo hash.</b> Sem chave, o atacante calcula o hash de 1 a 7 e compara: sete tentativas bastam. Hash de identificador previsível não protege."; }
+      else if(k === 1){ v = "<b>Reidentificada pelo nascimento.</b> O identificador está protegido, mas só uma pessoa de Santos tem esse valor. Quase-identificadores entregam a pessoa sem precisar do id."; }
+      else if(st.ident === "fora"){ v = "Ninguém é reidentificado, e também ninguém liga pedidos a clientes: a receita por cidade deixou de existir. Proteção que acaba com a utilidade não serve à análise."; }
+      else { v = "<b>Protegida e útil.</b> Sem a chave não há como refazer o pseudônimo, duas pessoas têm o mesmo perfil e a junção funciona. Ainda é dado pessoal: quem guarda a chave consegue reverter, e grupos pequenos continuam arriscados."; }
+      raiz.querySelector("#c4ver").innerHTML = v;
+    }
+    raiz.addEventListener("click", function(ev){
+      var b = ev.target.closest("button"); if(!b) return;
+      var i = b.getAttribute("data-i"), n = b.getAttribute("data-n");
+      if(i){ st.ident = i; } else if(n){ st.nasc = n; } else { return; }
+      pinta();
+    });
+    pinta();
+  }
+
+
+
+    /* ================= Missão 3: fluxo ================= */
+  function expFluxo(raiz){
+    var CAP = 8, st;
+    function zera(modo){
+      st = {modo:modo, head:3, offR:3, offL:0, upR:true, novo:null, perd:0, lost:{},
+        msg:"Três eventos já foram publicados. O leitor rápido leu todos, e o lento ainda não acordou. Publique mais e veja o que acontece com a espera."};
+    }
+    zera("fila");
+    raiz.innerHTML =
+      "<p>Um produtor publica cliques. Um leitor quer cada um na hora, e o outro acorda de vez em quando e lê em rajada. Compare os dois jeitos de guardar o que foi publicado.</p>" +
+      "<div class=\"seg\" role=\"group\" aria-label=\"Como os eventos são guardados\">" +
+        "<button type=\"button\" data-modo=\"fila\">Fila: entregou, esqueceu</button>" +
+        "<button type=\"button\" data-modo=\"log\">Log: guarda por tempo</button></div>" +
+      "<div class=\"btn-row\">" +
+        "<button type=\"button\" class=\"primario\" data-a=\"p1\">Publicar 1 evento</button>" +
+        "<button type=\"button\" class=\"secundario\" data-a=\"p5\">Publicar 5</button>" +
+        "<button type=\"button\" class=\"secundario\" data-a=\"lento\">Leitor lento acorda</button>" +
+        "<button type=\"button\" class=\"secundario\" data-a=\"r\"></button>" +
+        "<button type=\"button\" class=\"secundario\" data-a=\"novo\">Ligar um leitor novo</button>" +
+        "<button type=\"button\" class=\"secundario\" data-a=\"zera\">Recomeçar</button></div>" +
+      "<div class=\"slots\" id=\"f3slots\" role=\"img\" aria-label=\"Eventos publicados, por offset\"></div>" +
+      "<ul class=\"linhas\" id=\"f3leit\"></ul>" +
+      "<div class=\"tiles\" id=\"f3tiles\"></div>" +
+      "<div class=\"veredito\" id=\"f3ver\" aria-live=\"polite\"></div>";
+    function pend(){ return (st.head - st.offR) + (st.head - st.offL); }
+    function pl(n, um, muitos){ return n + " " + (n === 1 ? um : muitos); }
+    function pinta(){
+      var fila = st.modo === "fila";
+      Array.prototype.forEach.call(raiz.querySelectorAll(".seg button"), function(b){
+        b.setAttribute("aria-pressed", String(b.getAttribute("data-modo") === st.modo));
+      });
+      raiz.querySelector("[data-a=r]").textContent = st.upR ? "Derrubar o leitor rápido" : "Religar o leitor rápido";
+      raiz.querySelector("[data-a=novo]").disabled = st.novo !== null;
+      var h = "", ini = Math.max(0, st.head - 18), apagado = Math.min(st.offR, st.offL);
+      for(var i = ini; i < st.head; i++){
+        h += "<span class=\"slot" + (st.lost[i] ? " perd" : (fila && i < apagado ? " sumiu" : "")) + "\">" + i + "</span>";
+      }
+      raiz.querySelector("#f3slots").innerHTML = h || "<span class=\"vazio\">nada publicado</span>";
+      var aR = st.head - st.offR, aL = st.head - st.offL;
+      raiz.querySelector("#f3leit").innerHTML =
+        "<li><span class=\"quem\"><b>Leitor rápido</b><small>quer cada evento na hora · offset " + st.offR + "</small></span>" +
+          "<span class=\"res\"><small>" + (aR ? pl(aR, "evento esperando", "eventos esperando") : "em dia") + "</small><span class=\"st " + (st.upR ? "ok\">no ar" : "bad\">fora") + "</span></span></li>" +
+        "<li><span class=\"quem\"><b>Leitor lento</b><small>lê em rajadas · offset " + st.offL + "</small></span>" +
+          "<span class=\"res\"><small>" + (aL ? pl(aL, "evento de atraso", "eventos de atraso") : "em dia") + "</small><span class=\"st ok\">no ar</span></span></li>" +
+        "<li><span class=\"quem\"><b>Leitor novo</b><small>" + (st.novo === null ? "ainda não existe" : (fila ? "ligado depois · não viu o que passou" : "ligado depois · releu desde o offset 0")) + "</small></span>" +
+          "<span class=\"res\"><span class=\"st " + (st.novo === null ? "off\">desligado" : "ok\">no ar") + "</span></span></li>";
+      var guard = fila ? pend() : st.head;
+      raiz.querySelector("#f3tiles").innerHTML =
+        "<div class=\"tile\"><div class=\"big" + (fila && guard >= CAP - 2 ? " warn" : "") + "\">" + guard + "</div><div class=\"cap\">" + (fila ? "mensagens na memória<br>do broker (cabem " + CAP + ")" : "eventos guardados<br>no log, em disco") + "</div></div>" +
+        "<div class=\"tile\"><div class=\"big\">" + aL + "</div><div class=\"cap\">eventos de atraso<br>do leitor lento</div></div>" +
+        "<div class=\"tile\"><div class=\"big" + (st.perd ? " bad" : "") + "\">" + st.perd + "</div><div class=\"cap\">eventos perdidos<br>para sempre</div></div>";
+      raiz.querySelector("#f3ver").innerHTML = st.msg;
+    }
+    function publica(n){
+      for(var k = 0; k < n; k++){
+        st.head++;
+        if(st.upR){ st.offR = st.head; }
+        if(st.novo !== null){ st.novo = st.head; }
+        if(st.modo === "fila" && pend() > CAP){
+          var p = pend();
+          for(var i = Math.min(st.offR, st.offL); i < st.head; i++){ st.lost[i] = true; }
+          st.perd += p; st.offR = st.head; st.offL = st.head;
+          st.msg = "<b>O broker caiu.</b> A espera dos leitores passou do que cabe na memória, e " + pl(p, "mensagem se perdeu", "mensagens se perderam") + ". Ninguém consegue reler: a lentidão de um leitor virou a queda de todos.";
+          return;
+        }
+      }
+      st.msg = st.modo === "fila"
+        ? pl(n, "evento publicado", "eventos publicados") + ". A fila guarda na memória o que cada leitor ainda não leu: " + pl(pend(), "mensagem", "mensagens") + " agora."
+        : pl(n, "evento publicado", "eventos publicados") + ", anexados no fim do log. O leitor lento está " + pl(st.head - st.offL, "evento", "eventos") + " atrás, e isso não pesa em ninguém.";
+    }
+    raiz.addEventListener("click", function(ev){
+      var b = ev.target.closest("button"); if(!b || b.disabled) return;
+      var modo = b.getAttribute("data-modo"), a = b.getAttribute("data-a");
+      if(modo){ zera(modo); if(modo === "log"){ st.msg = "Os mesmos três eventos, agora em um log. Repita o teste: publique bastante, derrube o leitor rápido e ligue um leitor novo."; } pinta(); return; }
+      if(a === "zera"){ zera(st.modo); }
+      else if(a === "p1"){ publica(1); }
+      else if(a === "p5"){ publica(5); }
+      else if(a === "lento"){
+        var n = st.head - st.offL; st.offL = st.head;
+        st.msg = n ? "O leitor lento acordou e leu " + pl(n, "evento", "eventos") + " de uma vez. " + (st.modo === "fila" ? "As mensagens que todos já leram deixam de existir." : "Os eventos continuam no log para quem vier depois.")
+                   : "O leitor lento acordou e não havia nada novo.";
+      }
+      else if(a === "r"){
+        if(st.upR){ st.upR = false; st.msg = "O leitor rápido caiu. O produtor não percebe e continua publicando."; }
+        else {
+          var m = st.head - st.offR, de = st.offR; st.upR = true; st.offR = st.head;
+          st.msg = st.modo === "fila"
+            ? "O leitor rápido voltou e recebeu " + pl(m, "mensagem que a fila ainda guardava", "mensagens que a fila ainda guardava") + " para ele. O que se perdeu em uma queda do broker não volta."
+            : "O leitor rápido voltou, retomou do offset " + de + " e leu " + pl(m, "evento que esperava", "eventos que esperavam") + ". O offset é o único estado que ele precisou guardar.";
+        }
+      }
+      else if(a === "novo"){
+        st.novo = st.head;
+        st.msg = st.modo === "fila"
+          ? "<b>O leitor novo não vê o passado.</b> As " + st.head + " mensagens anteriores foram entregues e esquecidas. Para ter a história, alguém precisa montar uma carga à parte só para ele."
+          : "<b>O leitor novo começou do offset 0</b> e leu os " + st.head + " eventos da história. O produtor e os outros leitores nem ficaram sabendo.";
+      }
+      else { return; }
+      pinta();
+    });
+    pinta();
+  }
+
+  /* ================= Missão 5: dado pessoal escondido ================= */
+  function expEscondido(raiz){
+    var CAMPOS = [
+      {c:"clientes.email",         p:true,  x:"Identificador direto. Este ninguém erra."},
+      {c:"clientes.nascimento",    p:true,  x:"Sozinho não identifica, mas combinado com a cidade isola uma pessoa. Quase-identificador também é dado pessoal."},
+      {c:"pedidos.cliente_id",     p:true,  x:"Um número que leva à pessoa. Se dá para chegar a ela, direta ou indiretamente, é dado pessoal."},
+      {c:"pedidos.status",         p:false, x:"Não diz nada sobre ninguém. Atenção: a classe do conjunto é a do campo mais sensível, e pedidos tem campos pessoais."},
+      {c:"pedidos.observacao",     p:true,  esc:true, x:"Escondido. Texto livre guarda o que o atendimento escrever: há um e-mail no pedido 104 e um telefone no 106."},
+      {c:"navegacao.ip",           p:true,  esc:true, x:"Escondido. Endereço IP identifica um aparelho e, por ele, uma pessoa. Vale até para o visitante sem cadastro."},
+      {c:"navegacao.pagina",       p:false, x:"A página visitada não identifica ninguém sozinha. Ligada ao cliente ou ao IP, conta a história de uma pessoa."},
+      {c:"clientes.cidade",        p:true,  x:"Quase-identificador: em uma cidade com um cliente só, a cidade é a pessoa."}
+    ];
+    var marc = {}, conferido = false;
+    raiz.innerHTML =
+      "<p>Oito campos dos três conjuntos da loja. Marque os que são dado pessoal e confira. Dois deles costumam ficar fora do mapa.</p>" +
+      "<div class=\"acop\" id=\"g4l\"></div>" +
+      "<div class=\"btn-row\"><button type=\"button\" class=\"primario\" id=\"g4ok\">Conferir</button>" +
+        "<button type=\"button\" class=\"secundario\" id=\"g4zera\">Recomeçar</button></div>" +
+      "<div class=\"veredito\" id=\"g4ver\" aria-live=\"polite\">Marque e confira. O varredor da missão faz esta mesma pergunta a cada coluna da camada bronze.</div>";
+    function pinta(){
+      raiz.querySelector("#g4l").innerHTML = CAMPOS.map(function(f, i){
+        var res = "";
+        if(conferido){
+          var certo = !!marc[i] === f.p;
+          res = "<span class=\"st " + (certo ? "ok\">certo" : "bad\">" + (f.p ? "é pessoal" : "não é")) + "</span>" + f.x;
+        }
+        return "<div class=\"acop-l\"><label><input type=\"checkbox\" id=\"g4-" + i + "\" data-i=\"" + i + "\"" + (marc[i] ? " checked" : "") + "><span><code>" + f.c + "</code></span></label>" +
+          "<div class=\"mud\">" + res + "</div></div>";
+      }).join("");
+    }
+    raiz.addEventListener("change", function(ev){
+      var i = ev.target.getAttribute("data-i"); if(i === null) return;
+      marc[i] = ev.target.checked;
+    });
+    raiz.querySelector("#g4ok").addEventListener("click", function(){
+      conferido = true; pinta();
+      var acertos = CAMPOS.filter(function(f, i){ return !!marc[i] === f.p; }).length;
+      var esc = CAMPOS.filter(function(f, i){ return f.esc && marc[i]; }).length;
+      raiz.querySelector("#g4ver").innerHTML = "<b>" + acertos + " de 8.</b> " +
+        (esc === 2 ? "Os dois escondidos foram achados: a observação e o IP. " : "Dos dois escondidos, " + esc + (esc === 1 ? " foi achado. " : " foram achados. ")) +
+        "Seis dos oito campos são pessoais, e os três conjuntos acabam na classe pessoal.";
+    });
+    raiz.querySelector("#g4zera").addEventListener("click", function(){
+      marc = {}; conferido = false; pinta();
+      raiz.querySelector("#g4ver").innerHTML = "Marque e confira.";
+    });
+    pinta();
+  }
+
+  /* ================= Missão 6: o trajeto do CPF ================= */
+  function expTrajeto(raiz){
+    var R = "real", T = "token", M = "mascarado", A = "ausente", S = "sintético";
+    var ET = [
+      {n:"Cadastro na origem", o:[R, T, A], r:{
+        real:["ok","É onde o dado nasce e onde a nota fiscal precisa dele. Cifrado em repouso e com acesso restrito."],
+        token:["bad","O cadastro precisa do CPF verdadeiro para emitir a nota fiscal."],
+        ausente:["bad","O cadastro precisa do CPF verdadeiro para emitir a nota fiscal."]}},
+      {n:"Log de mudanças", o:[R, T, A], r:{
+        real:["warn","Viaja cifrado, mas cada evento vira mais uma morada do CPF. Só com retenção curta."],
+        token:["ok","O campo já sai da origem tokenizado: o pipeline nem vê o CPF real."],
+        ausente:["ok","Evento magro: se nenhum destino precisa do CPF, ele nem entra no evento."]}},
+      {n:"Camada bronze", o:[R, T, A], r:{
+        real:["warn","Cópia fiel, restrita ao pipeline e cifrada. É uma morada a mais para a Missão 8."],
+        token:["ok","A cópia guarda o código. O valor real fica em um lugar só."],
+        ausente:["ok","O que não foi copiado não precisa ser protegido nem esquecido."]}},
+      {n:"Camada silver", o:[R, T, A], r:{
+        real:["bad","O analista lê esta camada. CPF cru aqui é o vazamento esperando acontecer."],
+        token:["ok","Mesmo CPF, mesmo código: a junção funciona e o valor real não circula."],
+        ausente:["ok","Melhor ainda, se nenhuma análise usa o identificador."]}},
+      {n:"Painel do analista (gold)", o:[R, M, A], r:{
+        real:["bad","Esse papel precisa ver o valor real? Quase nunca."],
+        mascarado:["ok","***.***.333-33 para o papel que precisa conferir. Revelado só por exceção auditada."],
+        ausente:["ok","O padrão: o analista trabalha sem ver o CPF, e o trabalho dele não muda."]}},
+      {n:"Ambiente de teste", o:[R, M, S], r:{
+        real:["bad","Copiar a produção para o teste é incidente agendado."],
+        mascarado:["ok","Mascaramento estático, feito na cópia e sem volta."],
+        "sintético":["ok","Mesma forma, nenhuma pessoa real: o teste vale e o risco some."]}}
+    ];
+    var esc = ET.map(function(){ return R; });
+    raiz.innerHTML =
+      "<p>O CPF da cliente entra no cadastro e atravessa a plataforma. No começo ele está real em todas as etapas. Decida a forma dele em cada uma.</p>" +
+      "<div class=\"etapas\" id=\"s5l\"></div>" +
+      "<div class=\"tiles\" id=\"s5tiles\"></div>" +
+      "<div class=\"veredito\" id=\"s5ver\" aria-live=\"polite\"></div>";
+    function pinta(){
+      var reais2 = 0, erros = 0, avisos = 0;
+      raiz.querySelector("#s5l").innerHTML = ET.map(function(e, i){
+        var r = e.r[esc[i]];
+        if(esc[i] === R) reais2++;
+        if(r[0] === "bad") erros++;
+        if(r[0] === "warn") avisos++;
+        return "<div class=\"etapa\"><div class=\"etapa-c\"><b>" + (i + 1) + " · " + e.n + "</b>" +
+          "<div class=\"seg\" role=\"group\" aria-label=\"Forma do CPF em " + e.n + "\">" +
+          e.o.map(function(o){ return "<button type=\"button\" data-e=\"" + i + "\" data-o=\"" + o + "\" aria-pressed=\"" + (esc[i] === o) + "\">" + o + "</button>"; }).join("") +
+          "</div></div><div class=\"mud\"><span class=\"st " + (r[0] === "ok" ? "ok\">certo" : (r[0] === "warn" ? "warn\">atenção" : "bad\">erro")) + "</span>" + r[1] + "</div></div>";
+      }).join("");
+      raiz.querySelector("#s5tiles").innerHTML =
+        "<div class=\"tile\"><div class=\"big" + (reais2 > 2 ? " bad" : "") + "\">" + reais2 + "</div><div class=\"cap\">etapas com o<br>CPF real</div></div>" +
+        "<div class=\"tile\"><div class=\"big" + (erros ? " bad" : "") + "\">" + erros + "</div><div class=\"cap\">erros de<br>proteção</div></div>" +
+        "<div class=\"tile\"><div class=\"big" + (avisos ? " warn" : "") + "\">" + avisos + "</div><div class=\"cap\">pontos de atenção,<br>que custam controle</div></div>";
+      var v;
+      if(erros){ v = "Ainda há <b>" + erros + (erros === 1 ? " erro" : " erros") + "</b>. O CPF real continua onde ninguém precisa dele."; }
+      else if(reais2 === 1){ v = "<b>O CPF real vive em um lugar só.</b> Atacar a plataforma inteira virou atacar o cadastro, que é o lugar mais bem defendido."; }
+      else { v = "Sem erros, com o CPF real em <b>" + reais2 + " etapas</b>. É uma decisão possível, e cada etapa a mais exige cifra, acesso restrito e um item no inventário de moradas."; }
+      raiz.querySelector("#s5ver").innerHTML = v;
+    }
+    raiz.addEventListener("click", function(ev){
+      var b = ev.target.closest("button[data-e]"); if(!b) return;
+      esc[parseInt(b.getAttribute("data-e"), 10)] = b.getAttribute("data-o"); pinta();
+    });
+    pinta();
+  }
+
+  /* ================= Missão 8: as moradas ================= */
+  function expMoradas(raiz){
+    var TEC = [
+      ["", "escolha a técnica"],
+      ["del", "apagar (DELETE)"],
+      ["tomb", "marcador de exclusão e retenção curta"],
+      ["desv", "manter o registro, sem a pessoa"],
+      ["exp", "deixar expirar e não restaurar"],
+      ["nada", "não fazer nada"]
+    ];
+    var MOR = [
+      {n:"Cadastro em clientes, na origem e na camada bronze", ok:["del"], x:{
+        del:"Certo. O DELETE na origem viaja pelo log e chega à camada bronze.",
+        "*":"O cadastro existe só para a relação com a cliente. Sem relação, ele é apagado."}},
+      {n:"Eventos da cliente no log, nos tópicos de mudanças e de navegação", ok:["tomb"], x:{
+        tomb:"Certo. O log é só anexar: registra-se a exclusão por chave e a retenção curta leva o resto.",
+        del:"Um log não se edita: é o que o torna confiável. A saída é o marcador de exclusão por chave, com retenção curta.",
+        "*":"A inserção antiga da cliente continua gravada no log, com nome e CPF."}},
+      {n:"Pedido 106, com valor e data", ok:["desv"], x:{
+        desv:"Certo. A nota fiscal é obrigação legal: o pedido fica, sem vínculo com a pessoa.",
+        del:"A nota fiscal precisa existir por obrigação legal. O pedido fica; quem sai é a pessoa.",
+        "*":"O pedido não pode sumir, e também não pode continuar apontando para ela."}},
+      {n:"Telefone no campo observação do pedido 106", ok:["del"], x:{
+        del:"Certo. Limpa-se o conteúdo do campo. É a morada que quase todo inventário esquece.",
+        desv:"O telefone é o dado pessoal em si: não há o que desvincular, só apagar o conteúdo.",
+        "*":"Dado pessoal em texto livre: quem esquece esta morada aprende do pior jeito."}},
+      {n:"Eventos de navegação, com o IP dela", ok:["del","exp"], x:{
+        del:"Certo. Os dois eventos saem da origem e das camadas de destino.",
+        exp:"Aceitável se a retenção for de dias. Com retenção longa, apague agora.",
+        "*":"O IP identifica o aparelho dela. Os eventos 5 e 8 contam o que ela olhou."}},
+      {n:"Cópia de segurança feita no dia 1", ok:["exp"], x:{
+        exp:"Certo. Apagar dentro da cópia é inviável. Ela expira no prazo, e a lista de eliminação é reaplicada a cada restauração.",
+        del:"Abrir e editar uma cópia de segurança é inviável, e em cópia imutável é impossível. A saída é processo: expirar e não restaurar o eliminado.",
+        "*":"A cópia do dia 1 guarda a cliente inteira. Se for restaurada como está, ela volta."}}
+    ];
+    var esc = MOR.map(function(){ return ""; });
+    raiz.innerHTML =
+      "<p>O cadastro da cliente 5 já foi excluído pelo log. Ela ainda vive em seis moradas. Escolha a técnica de cada uma.</p>" +
+      "<div class=\"etapas\" id=\"m7l\"></div>" +
+      "<div class=\"veredito\" id=\"m7ver\" aria-live=\"polite\"></div>";
+    function pinta(){
+      var ok = 0;
+      raiz.querySelector("#m7l").innerHTML = MOR.map(function(m, i){
+        var e = esc[i], certo = m.ok.indexOf(e) >= 0, fb = "";
+        if(certo) ok++;
+        if(e){ fb = "<span class=\"st " + (certo ? "ok\">certo" : "bad\">reveja") + "</span>" + (m.x[e] || m.x["*"]); }
+        return "<div class=\"etapa\"><div class=\"etapa-c\"><label for=\"m7-" + i + "\"><b>" + (i + 1) + " · " + m.n + "</b></label>" +
+          "<select id=\"m7-" + i + "\" data-m=\"" + i + "\">" + TEC.map(function(t){ return "<option value=\"" + t[0] + "\"" + (t[0] === e ? " selected" : "") + ">" + t[1] + "</option>"; }).join("") + "</select></div>" +
+          "<div class=\"mud\">" + fb + "</div></div>";
+      }).join("");
+      raiz.querySelector("#m7ver").innerHTML = ok === 6
+        ? "<b>6 de 6 moradas resolvidas.</b> Quatro técnicas diferentes para uma pessoa só. Com crypto-shredding, uma única ação cobriria as moradas cifradas com a chave dela."
+        : "<b>" + ok + " de 6</b> moradas resolvidas. Enquanto sobrar uma, o pedido de eliminação não foi atendido.";
+    }
+    raiz.addEventListener("change", function(ev){
+      var i = ev.target.getAttribute("data-m"); if(i === null) return;
+      esc[parseInt(i, 10)] = ev.target.value; pinta();
+      var s = raiz.querySelector("#m7-" + i); if(s){ s.focus(); }
+    });
+    pinta();
+  }
+
+  /* ================= Missão 9: o ataque ================= */
+  function expAtaque(raiz){
+    var st = {outro:true, imut:"nao", isol:false, chave:false, teste:false};
+    raiz.innerHTML =
+      "<p>Monte o esquema de cópias da loja. Depois leia o que sobra na sexta, às 18h: um invasor com credencial de administrador cifra a produção e apaga tudo o que alcança. Há 14 dias ele desligou a agenda de cópias sem ninguém notar.</p>" +
+      "<div class=\"acop\">" +
+        "<div class=\"acop-l um\"><label><input type=\"checkbox\" id=\"r8-snap\" checked disabled><span>Snapshot no mesmo armazenamento da produção <small>(já existe)</small></span></label></div>" +
+        "<div class=\"acop-l um\"><label><input type=\"checkbox\" id=\"r8-outro\" checked><span>Cópia em outro local, na mesma conta e com a mesma credencial</span></label></div>" +
+        "<div class=\"acop-l um\"><label><input type=\"checkbox\" id=\"r8-isol\"><span>Cópia isolada, com credencial e agenda independentes, feita uma vez por semana</span></label></div>" +
+        "<div class=\"acop-l um\"><label><input type=\"checkbox\" id=\"r8-chave\"><span>Cópia da chave guardada fora do ambiente de produção</span></label></div>" +
+        "<div class=\"acop-l um\"><label><input type=\"checkbox\" id=\"r8-teste\"><span>Restauração ensaiada e cronometrada neste mês</span></label></div>" +
+      "</div>" +
+      "<div><p class=\"sub-t\">Cópia imutável</p><div class=\"seg\" role=\"group\" aria-label=\"Cópia imutável\">" +
+        "<button type=\"button\" data-im=\"nao\">Não tem</button>" +
+        "<button type=\"button\" data-im=\"7\">Travada por 7 dias</button>" +
+        "<button type=\"button\" data-im=\"30\">Travada por 30 dias</button></div></div>" +
+      "<ul class=\"regra5\" id=\"r8regra\" aria-label=\"Regra 3-2-1-1-0\"></ul>" +
+      "<div class=\"tiles\" id=\"r8tiles\"></div>" +
+      "<div class=\"veredito\" id=\"r8ver\" aria-live=\"polite\"></div>";
+    function pinta(){
+      Array.prototype.forEach.call(raiz.querySelectorAll("[data-im]"), function(b){ b.setAttribute("aria-pressed", String(b.getAttribute("data-im") === st.imut)); });
+      var temImut = st.imut !== "nao";
+      var copias = 2 + (st.outro ? 1 : 0) + (temImut ? 1 : 0) + (st.isol ? 1 : 0);
+      var regra = [
+        ["3 cópias", copias >= 3],
+        ["2 locais", st.outro || temImut || st.isol],
+        ["1 fora", st.outro || st.isol],
+        ["1 imutável ou isolada", temImut || st.isol],
+        ["0 erros no teste", st.teste]
+      ];
+      raiz.querySelector("#r8regra").innerHTML = regra.map(function(r){ return "<li class=\"" + (r[1] ? "sim" : "nao") + "\">" + (r[1] ? "✓ " : "✗ ") + r[0] + "</li>"; }).join("");
+
+      var sobrev = null, dias = null;
+      if(st.isol){ sobrev = "isolada"; dias = 5; }
+      else if(st.imut === "30"){ sobrev = "imutável"; dias = 14; }
+      raiz.querySelector("#r8tiles").innerHTML =
+        "<div class=\"tile\"><div class=\"big" + (sobrev ? "" : " bad") + "\">" + (sobrev || "nenhuma") + "</div><div class=\"cap\">cópia que<br>sobreviveu</div></div>" +
+        "<div class=\"tile\"><div class=\"big" + (sobrev && dias <= 5 ? "" : " bad") + "\">" + (sobrev ? dias + " dias" : "tudo") + "</div><div class=\"cap\">de dados perdidos<br>(o RPO real)</div></div>" +
+        "<div class=\"tile\"><div class=\"big" + (sobrev && st.chave ? "" : " bad") + "\">" + (!sobrev ? "—" : (st.chave ? "sim" : "não")) + "</div><div class=\"cap\">o dado restaurado<br>abre?</div></div>";
+      var caiu = "O snapshot morava junto do original" + (st.outro ? ", a cópia no outro local caiu com a mesma credencial" : "") +
+        (st.imut === "7" ? ", e a trava de 7 dias venceu antes do ataque: a última cópia tinha 14 dias" : "") + ".";
+      var v;
+      if(!sobrev){ v = "<b>Nada sobreviveu.</b> " + caiu + " Três cópias na mesma conta valem uma."; }
+      else {
+        v = "<b>A cópia " + sobrev + " sobreviveu</b>" + (sobrev === "isolada" ? ", porque o invasor não alcança o que não tem caminho de rede nem credencial em comum. " : ", porque a trava de 30 dias cobre as duas semanas em que a agenda ficou desligada. ") +
+          "Ela é o ponto limpo, com " + dias + " dias de perda. ";
+        v += st.chave ? "A chave volta primeiro, depois os dados. " : "<b>Mas a chave estava só na produção:</b> dado restaurado sem chave restaurada é lixo cifrado. ";
+        v += st.teste ? "O tempo de volta é o medido no último ensaio." : "Ninguém nunca restaurou essa cópia: o tempo de volta e a integridade serão descobertos na hora.";
+      }
+      raiz.querySelector("#r8ver").innerHTML = v;
+    }
+    raiz.addEventListener("click", function(ev){
+      var b = ev.target.closest("button[data-im]"); if(!b) return;
+      st.imut = b.getAttribute("data-im"); pinta();
+    });
+    [["outro","outro"],["isol","isol"],["chave","chave"],["teste","teste"]].forEach(function(p){
+      raiz.querySelector("#r8-" + p[0]).addEventListener("change", function(){ st[p[1]] = this.checked; pinta(); });
+    });
+    pinta();
+  }
+
+  /* ================= Missão 10: peças da entrega ================= */
+  function expMatriz(raiz){
+    var mz = salvo.matriz;
+    var h = "<p>Uma frase por peça, apontando para o repositório do grupo e para o número que a comprova. A página monta a seção pronta para colar no README.</p><div class=\"form\">" +
+      "<div class=\"duo\">" +
+        "<div class=\"campo\"><label for=\"mz-grupo\">Integrantes do grupo</label><input id=\"mz-grupo\" data-k=\"grupo\" type=\"text\" placeholder=\"nomes e RMs\"></div>" +
+        "<div class=\"campo\"><label for=\"mz-ling\">Linguagem e bancos</label><input id=\"mz-ling\" data-k=\"ling\" type=\"text\" placeholder=\"ex.: Go, origem em PostgreSQL, camadas em Parquet\"></div>" +
+      "</div>" +
+      "<div class=\"campo\"><label for=\"mz-trilha\">Trilha de captura de mudanças</label><input id=\"mz-trilha\" data-k=\"trilha\" type=\"text\" placeholder=\"ex.: Trilha A, tabela mudancas com gatilhos, e o motivo\"></div>";
+    PECAS.forEach(function(p, i){
+      h += "<div class=\"campo\"><label for=\"mz-p" + i + "\">" + (i + 1) + " · " + p.n + "</label><input id=\"mz-p" + i + "\" data-k=\"p" + i + "\" type=\"text\" placeholder=\"" + p.d + "\"></div>";
+    });
+    h += "<div class=\"btn-row\"><button type=\"button\" class=\"primario\" id=\"mz-gerar\">Gerar seção do README</button>" +
+      "<button type=\"button\" class=\"secundario\" id=\"mz-copiar\">Copiar</button></div>" +
+      "<textarea id=\"mz-saida\" readonly aria-label=\"Seção do README em Markdown\"></textarea></div>";
+    raiz.innerHTML = h;
+    Array.prototype.forEach.call(raiz.querySelectorAll("input[data-k]"), function(inp){
+      var k = inp.getAttribute("data-k");
+      if(mz[k]){ inp.value = mz[k]; }
+      inp.addEventListener("input", function(){ mz[k] = inp.value; salvar(); gerar(); });
+    });
+    function v(k){ return (mz[k] || "").trim().replace(/\|/g, "/") || "_a preencher_"; }
+    function gerar(){
+      var md = "## Do dado à proteção · laboratório de DI\n\n" +
+        "**Grupo:** " + v("grupo") + "\n" +
+        "**Linguagem e bancos:** " + v("ling") + "\n" +
+        "**Trilha de captura de mudanças:** " + v("trilha") + "\n\n" +
+        "### Peças da entrega\n\n" +
+        "| Semana | Missão | Peça | Onde está e qual número a comprova |\n|---|---|---|---|\n" +
+        PECAS.map(function(p, i){ return "| " + (semanaDe(i + 1) + 1) + " | " + (i + 1) + " | " + p.n + " | " + v("p" + i) + " |"; }).join("\n") +
+        "\n\n### Como rodar\n\n_Comandos para rodar o pipeline do zero, com as variáveis de ambiente necessárias (sem o valor da chave)._\n\n" +
+        "### Números finais\n\n_Clientes, pedidos e eventos em cada camada, receita paga total e a visão de consumo._\n\n" +
+        "### RTO medido no ensaio\n\n_Quanto levou a restauração completa, e quanto o plano prometia._\n";
+      raiz.querySelector("#mz-saida").value = md;
+    }
+    raiz.querySelector("#mz-gerar").addEventListener("click", function(){ gerar(); raiz.querySelector("#mz-saida").focus(); });
+    raiz.querySelector("#mz-copiar").addEventListener("click", function(){
+      gerar();
+      var ta = raiz.querySelector("#mz-saida"), b = this;
+      try{
+        navigator.clipboard.writeText(ta.value).then(function(){ b.textContent = "Copiado"; setTimeout(function(){ b.textContent = "Copiar"; }, 1400); },
+          function(){ ta.focus(); ta.select(); });
+      }catch(e){ ta.focus(); ta.select(); }
+    });
+    gerar();
+  }
+
+  /* ================= eventos globais ================= */
+  $("btnNext").addEventListener("click", function(){ ir(atual + 1); });
+  $("btnPrev").addEventListener("click", function(){ ir(atual - 1); });
+  $("btnNext2").addEventListener("click", function(){ ir(atual + 1, true); });
+  $("btnPrev2").addEventListener("click", function(){ ir(atual - 1, true); });
+  document.addEventListener("keydown", function(ev){
+    var t = ev.target && ev.target.tagName;
+    if(t === "INPUT" || t === "TEXTAREA" || t === "SELECT" || t === "PRE") return;
+    if(ev.key === "ArrowRight"){ ir(atual + 1); }
+    if(ev.key === "ArrowLeft"){ ir(atual - 1); }
+  });
+
+  desenhar();
+})();
+</script>
+
+</body>
+</html>

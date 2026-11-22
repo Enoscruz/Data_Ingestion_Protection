@@ -1,0 +1,7 @@
+id,nome,email,cpf,nascimento,cidade,atualizado_em
+901,Pessoa Sintetica 1,pessoa1@exemplo.invalido,001.001.001-01,1990-03-12,Santos,2026-10-01T09:00:00
+902,Pessoa Sintetica 2,pessoa2@exemplo.invalido,002.002.002-02,1985-07-30,Campinas,2026-10-01T09:05:00
+903,Pessoa Sintetica 3,pessoa3@exemplo.invalido,003.003.003-03,1998-11-02,Santos,2026-10-01T09:10:00
+904,Pessoa Sintetica 4,pessoa4@exemplo.invalido,004.004.004-04,1979-01-21,Sorocaba,2026-10-01T09:15:00
+905,Pessoa Sintetica 5,pessoa5@exemplo.invalido,005.005.005-05,2001-05-09,Campinas,2026-10-01T09:20:00
+906,Pessoa Sintetica 6,pessoa6@exemplo.invalido,006.006.006-06,1993-09-17,Santos,2026-10-01T09:25:00
